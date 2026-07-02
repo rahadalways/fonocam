@@ -126,7 +126,7 @@ fun CamConnectApp(prefs: SharedPreferences) {
     val targetResolution = remember(resolutionName) {
         when (resolutionName) {
             "1080p" -> android.util.Size(1920, 1080)
-            "480p" -> android.util.Size(640, 480)
+            "480p" -> android.util.Size(854, 480)
             else -> android.util.Size(1280, 720)
         }
     }
@@ -837,15 +837,28 @@ fun CameraPreviewContainer(
         val cameraProvider = cameraProviderFuture.get()
         cameraProvider.unbindAll()
 
+        // lock the feed to 16:9 so the stream is never square
+        val resolutionSelector = androidx.camera.core.resolutionselector.ResolutionSelector.Builder()
+            .setAspectRatioStrategy(
+                androidx.camera.core.resolutionselector.AspectRatioStrategy.RATIO_16_9_FALLBACK_AUTO_STRATEGY
+            )
+            .setResolutionStrategy(
+                androidx.camera.core.resolutionselector.ResolutionStrategy(
+                    targetResolution,
+                    androidx.camera.core.resolutionselector.ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER_THEN_HIGHER
+                )
+            )
+            .build()
+
         val preview = Preview.Builder()
-            .setTargetResolution(targetResolution)
+            .setResolutionSelector(resolutionSelector)
             .build().apply {
                 setSurfaceProvider(previewView.surfaceProvider)
             }
 
         val imageAnalysis = ImageAnalysis.Builder()
             .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-            .setTargetResolution(targetResolution)
+            .setResolutionSelector(resolutionSelector)
             .build()
 
         var lastProcessedTime = 0L
