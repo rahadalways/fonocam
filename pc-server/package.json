@@ -1,0 +1,17 @@
+{
+  "name": "webrtc-webcam-server",
+  "version": "1.0.0",
+  "description": "Lightweight Node.js Express and WebSocket WebRTC signaling server for local camera streaming",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "selfsigned": "^2.4.1",
+    "ws": "^8.17.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

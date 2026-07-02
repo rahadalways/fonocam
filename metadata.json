@@ -1,0 +1,6 @@
+{
+  "name": "CamConnect",
+  "description": "High-speed, lag-free, high-resolution webcam and stream server to use your phone as a PC web camera over Wi-Fi and USB, supporting multiple aspect ratios and custom sizes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
