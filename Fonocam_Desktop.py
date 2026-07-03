@@ -20,6 +20,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import webbrowser
 from datetime import datetime
 
 import cv2
@@ -248,6 +249,13 @@ class FonocamApp(ctk.CTk):
         self.status_chip = ctk.CTkLabel(top, text="●  Not connected", font=ctk.CTkFont("Consolas", 13),
                                         text_color=MUTED)
         self.status_chip.pack(side="right", padx=18)
+        ctk.CTkButton(top, text="Docs", width=64, height=30, corner_radius=8,
+                      fg_color="transparent", hover_color=PANEL2, border_width=1,
+                      border_color=LINE, text_color=MUTED,
+                      font=ctk.CTkFont("Segoe UI", 12),
+                      command=lambda: webbrowser.open(
+                          "https://rahadalways.github.io/camconnect/")
+                      ).pack(side="right", padx=(0, 6))
 
         # ---- main area ----
         main = ctk.CTkFrame(self, fg_color=BG, corner_radius=0)

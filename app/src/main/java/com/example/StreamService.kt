@@ -65,6 +65,7 @@ class StreamService : LifecycleService() {
     private var activeRecording: Recording? = null
     private val analysisExecutor = Executors.newSingleThreadExecutor()
     private var targetResolution = android.util.Size(1280, 720)
+    private var recQualityPref = "1080p"
 
     override fun onCreate() {
         super.onCreate()
@@ -81,6 +82,7 @@ class StreamService : LifecycleService() {
 
         val prefs = getSharedPreferences("fonocam_prefs", Context.MODE_PRIVATE)
         val port = prefs.getInt("port", 8080)
+        recQualityPref = prefs.getString("rec_quality", "1080p") ?: "1080p"
         targetResolution = when (prefs.getString("resolution", "720p")) {
             "1080p" -> android.util.Size(1920, 1080)
             "480p" -> android.util.Size(854, 480)
@@ -185,12 +187,17 @@ class StreamService : LifecycleService() {
                     }
                 }
 
-                // backup recording targets full-HD (1080p) like the stock
-                // camera app; falls back to the best the device supports
+                // recording quality follows the user's setting; falls back
+                // to the best the device supports
+                val recTarget = when (recQualityPref) {
+                    "4K" -> Quality.UHD
+                    "720p" -> Quality.HD
+                    else -> Quality.FHD
+                }
                 val recorder = Recorder.Builder()
                     .setQualitySelector(
                         QualitySelector.from(
-                            Quality.FHD, FallbackStrategy.higherQualityOrLowerThan(Quality.FHD)
+                            recTarget, FallbackStrategy.higherQualityOrLowerThan(recTarget)
                         )
                     )
                     .build()
@@ -260,7 +267,15 @@ class StreamService : LifecycleService() {
                 contentResolver, MediaStore.Video.Media.EXTERNAL_CONTENT_URI
             ).setContentValues(values).build()
 
-            activeRecording = vc.output.prepareRecording(this, options)
+            var pending = vc.output.prepareRecording(this, options)
+            // record sound too when the mic permission is granted
+            if (ContextCompat.checkSelfPermission(
+                    this, android.Manifest.permission.RECORD_AUDIO
+                ) == android.content.pm.PackageManager.PERMISSION_GRANTED
+            ) {
+                pending = pending.withAudioEnabled()
+            }
+            activeRecording = pending
                 .start(ContextCompat.getMainExecutor(this)) { event ->
                     if (event is VideoRecordEvent.Finalize) {
                         lastRecordingName = name

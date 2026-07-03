@@ -116,6 +116,7 @@ fun FonocamApp(prefs: SharedPreferences) {
     // ---- persisted settings ----
     var serverPort by remember { mutableStateOf(prefs.getInt("port", 8080)) }
     var resolutionName by remember { mutableStateOf(prefs.getString("resolution", "720p") ?: "720p") }
+    var recQuality by remember { mutableStateOf(prefs.getString("rec_quality", "1080p") ?: "1080p") }
     var autoDimOn by remember { mutableStateOf(prefs.getBoolean("auto_dim", true)) }
 
     // ---- runtime state (mirrored from the service) ----
@@ -151,7 +152,7 @@ fun FonocamApp(prefs: SharedPreferences) {
     ) { results -> hasCamPermission = results[Manifest.permission.CAMERA] == true }
 
     LaunchedEffect(Unit) {
-        val wanted = mutableListOf(Manifest.permission.CAMERA)
+        val wanted = mutableListOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
         if (Build.VERSION.SDK_INT >= 33) wanted.add(Manifest.permission.POST_NOTIFICATIONS)
         val missing = wanted.any {
             ContextCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED
@@ -531,6 +532,11 @@ fun FonocamApp(prefs: SharedPreferences) {
                     serverPort = it
                     prefs.edit().putInt("port", it).apply()
                 },
+                recQuality = recQuality,
+                onRecQualityChange = {
+                    recQuality = it
+                    prefs.edit().putString("rec_quality", it).apply()
+                },
                 autoDimOn = autoDimOn,
                 onAutoDimChange = {
                     autoDimOn = it
@@ -549,6 +555,8 @@ private fun SettingsDialog(
     onResolutionChange: (String) -> Unit,
     port: Int,
     onPortChange: (Int) -> Unit,
+    recQuality: String,
+    onRecQualityChange: (String) -> Unit,
     autoDimOn: Boolean,
     onAutoDimChange: (Boolean) -> Unit,
     onClose: () -> Unit
@@ -621,6 +629,35 @@ private fun SettingsDialog(
                 }
             }
 
+            // recording quality
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                SettingLabel("RECORDING QUALITY")
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("720p", "1080p", "4K").forEach { r ->
+                        val selected = r == recQuality
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(if (selected) Accent else Panel2)
+                                .border(
+                                    1.dp, if (selected) Accent else Line,
+                                    RoundedCornerShape(10.dp)
+                                )
+                                .clickable { onRecQualityChange(r) }
+                                .padding(vertical = 10.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                r,
+                                color = if (selected) Bg else TextC,
+                                fontSize = 13.sp, fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            }
+
             // port
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 SettingLabel("PORT")
@@ -641,10 +678,6 @@ private fun SettingsDialog(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     SettingLabel("BATTERY SAVER")
-                    Text(
-                        "Screen dims after 30 s of inactivity. Streaming keeps running.",
-                        color = Muted, fontSize = 11.sp, lineHeight = 15.sp
-                    )
                 }
                 Switch(
                     checked = autoDimOn,
@@ -659,10 +692,29 @@ private fun SettingsDialog(
                 )
             }
 
-            Text(
-                "Streaming runs as a background service with a notification, so you can leave the app or turn the screen off. The record button saves a backup video on the phone (Movies/Fonocam). Pinch the viewfinder to zoom.",
-                color = Color(0xFF5A6570), fontSize = 11.sp, lineHeight = 15.sp
-            )
+            // docs link
+            val docsCtx = LocalContext.current
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(Panel2)
+                    .border(1.dp, Line, RoundedCornerShape(10.dp))
+                    .clickable {
+                        docsCtx.startActivity(
+                            Intent(
+                                Intent.ACTION_VIEW,
+                                android.net.Uri.parse("https://rahadalways.github.io/camconnect/")
+                            )
+                        )
+                    }
+                    .padding(horizontal = 14.dp, vertical = 12.dp)
+            ) {
+                Text("Read the docs", color = TextC, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                Spacer(Modifier.weight(1f))
+                Text("↗", color = Accent, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            }
 
             // ---- app update ----
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
