@@ -33,7 +33,9 @@ jobs:
         run: gradle assembleRelease
 
       - name: Rename APK
-        run: cp app/build/outputs/apk/release/app-release.apk Fonocam-v1.0.${{ github.run_number }}.apk
+        run: |
+          cp app/build/outputs/apk/release/app-release.apk Fonocam-v1.0.${{ github.run_number }}.apk
+          cp app/build/outputs/apk/release/app-release.apk Fonocam.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -46,7 +48,9 @@ jobs:
         with:
           tag_name: v1.0.${{ github.run_number }}
           name: Fonocam v1.0.${{ github.run_number }}
-          files: Fonocam-v*.apk
+          files: |
+            Fonocam-v*.apk
+            Fonocam.apk
 
   build-exe:
     runs-on: windows-latest
@@ -66,7 +70,9 @@ jobs:
         run: pyinstaller --noconfirm --onefile --windowed --name Fonocam --icon fonocam.ico --add-data "fonocam.ico;." --collect-all customtkinter Fonocam_Desktop.py
 
       - name: Rename EXE
-        run: copy dist\Fonocam.exe Fonocam-Desktop-v1.0.${{ github.run_number }}.exe
+        run: |
+          copy dist\Fonocam.exe Fonocam-Desktop-v1.0.${{ github.run_number }}.exe
+          copy dist\Fonocam.exe Fonocam-Desktop.exe
 
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
@@ -78,4 +84,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.${{ github.run_number }}
-          files: Fonocam-Desktop-v*.exe
+          files: |
+            Fonocam-Desktop-v*.exe
+            Fonocam-Desktop.exe
