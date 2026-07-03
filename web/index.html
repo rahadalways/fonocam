@@ -4,29 +4,40 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-<title>Fonocam — Turn your Android phone into a PC webcam (free, WiFi & USB)</title>
-<meta name="description" content="Fonocam turns your Android phone into a premium PC webcam over WiFi or USB. Works with Zoom, Google Meet, Discord and OBS. Free, open source, no sign-up, no ads." />
-<meta name="keywords" content="phone as webcam, android webcam app, use phone as webcam, wireless webcam, usb webcam android, droidcam alternative, virtual camera, obs virtual camera, fonocam" />
+<!-- ============ Primary SEO ============ -->
+<title>Fonocam — Use Your Android Phone as a PC Webcam (Free, WiFi & USB)</title>
+<meta name="description" content="Fonocam is a free DroidCam alternative that turns your Android phone into a premium PC webcam over WiFi or USB. Works with Zoom, Google Meet, Discord, Teams and OBS. Open source, no sign-up, no ads." />
+<meta name="keywords" content="use phone as webcam, android phone as webcam, phone as pc webcam, droidcam alternative, free webcam app for pc, use android as webcam for zoom, use phone as webcam for google meet, wireless webcam app, usb webcam android, turn phone into webcam, obs virtual camera, fonocam" />
 <meta name="author" content="Rahad" />
-<meta name="robots" content="index, follow, max-image-preview:large" />
+<meta name="application-name" content="Fonocam" />
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
 <link rel="canonical" href="https://rahadalways.github.io/camconnect/" />
 <meta name="theme-color" content="#14181d" />
 
+<!-- ============ Open Graph ============ -->
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="Fonocam" />
+<meta property="og:locale" content="en_US" />
 <meta property="og:title" content="Fonocam — Your phone is the camera" />
-<meta property="og:description" content="Turn your Android phone into a premium PC webcam over WiFi or USB. Free, open source, works with Zoom, Meet, Discord and OBS." />
+<meta property="og:description" content="A free DroidCam alternative. Turn your Android phone into a premium PC webcam over WiFi or USB, for Zoom, Meet, Discord and OBS." />
 <meta property="og:url" content="https://rahadalways.github.io/camconnect/" />
 <meta property="og:image" content="https://rahadalways.github.io/camconnect/og-image.png" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="Fonocam - use your Android phone as a PC webcam over WiFi or USB" />
+
+<!-- ============ Twitter ============ -->
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="Fonocam — Your phone is the camera" />
-<meta name="twitter:description" content="Turn your Android phone into a premium PC webcam over WiFi or USB. Free & open source." />
+<meta name="twitter:description" content="A free DroidCam alternative. Turn your Android phone into a premium PC webcam over WiFi or USB." />
 <meta name="twitter:image" content="https://rahadalways.github.io/camconnect/og-image.png" />
+<meta name="twitter:image:alt" content="Fonocam - use your Android phone as a PC webcam" />
 
 <link rel="icon" href="/camconnect/favicon.ico" />
+<link rel="apple-touch-icon" href="/camconnect/favicon.ico" />
+<link rel="manifest" href="/camconnect/manifest.webmanifest" />
 
+<!-- avoid theme flash -->
 <script>
   (function () {
     try {
@@ -41,8 +52,34 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
 
+<!-- ============ Structured data ============ -->
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Fonocam","operatingSystem":"Windows 10, Windows 11, Android 7.0+","applicationCategory":"MultimediaApplication","description":"Turn your Android phone into a PC webcam over WiFi or USB. Works with Zoom, Google Meet, Discord and OBS.","url":"https://rahadalways.github.io/camconnect/","image":"https://rahadalways.github.io/camconnect/og-image.png","downloadUrl":"https://github.com/rahadalways/camconnect/releases/latest","author":{"@type":"Person","name":"Rahad"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+{"@context":"https://schema.org","@type":"WebSite","name":"Fonocam","url":"https://rahadalways.github.io/camconnect/","inLanguage":"en","description":"Use your Android phone as a free PC webcam over WiFi or USB."}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Fonocam","alternateName":"Fonocam Webcam","operatingSystem":"Windows 10, Windows 11, Android 7.0+","applicationCategory":"MultimediaApplication","description":"A free DroidCam alternative that turns your Android phone into a PC webcam over WiFi or USB. Works with Zoom, Google Meet, Discord, Teams and OBS.","url":"https://rahadalways.github.io/camconnect/","image":"https://rahadalways.github.io/camconnect/og-image.png","downloadUrl":"https://github.com/rahadalways/camconnect/releases/latest","softwareVersion":"1.0","author":{"@type":"Person","name":"Rahad"},"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"HowTo","name":"How to use your Android phone as a PC webcam with Fonocam","description":"Set up Fonocam on Windows and Android to use your phone as a webcam for Zoom, Meet, Discord and OBS.","totalTime":"PT3M","tool":[{"@type":"HowToTool","name":"Android phone (7.0+)"},{"@type":"HowToTool","name":"Windows 10 or 11 PC"}],"step":[
+{"@type":"HowToStep","name":"Install the Windows app","text":"Download Fonocam-Setup.exe and run it. If SmartScreen asks, choose More info then Run anyway."},
+{"@type":"HowToStep","name":"Install the OBS driver once","text":"Install OBS Studio from obsproject.com once so Windows registers the virtual camera driver. You never need to open OBS."},
+{"@type":"HowToStep","name":"Install the Android app","text":"Download Fonocam.apk on your phone and install it, allowing installs from your browser."},
+{"@type":"HowToStep","name":"Press Start on the phone","text":"Open Fonocam, allow the camera and microphone, and tap the Start button."},
+{"@type":"HowToStep","name":"Connect from the desktop","text":"Open Fonocam on the PC. Your phone appears in the device list on the same WiFi. Click Connect."},
+{"@type":"HowToStep","name":"Start the virtual webcam","text":"Press Start Virtual Webcam, then pick the OBS Virtual Camera in Zoom, Meet, Discord or OBS."}
+]}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"Is Fonocam really free?","acceptedAnswer":{"@type":"Answer","text":"Yes, completely free, no ads, no account, no premium tier. The full source code is public on GitHub and every release is compiled publicly on GitHub Actions."}},
+{"@type":"Question","name":"Do I need OBS Studio?","acceptedAnswer":{"@type":"Answer","text":"You install it once so Windows registers the OBS Virtual Camera driver. After that you never need to open OBS, Fonocam pipes video into the driver on its own."}},
+{"@type":"Question","name":"Does it work over USB?","acceptedAnswer":{"@type":"Answer","text":"Yes. Enable USB debugging on the phone, plug in the cable and press USB in the desktop app. You get lower latency, zero WiFi drops, and the phone charges while streaming."}},
+{"@type":"Question","name":"The video lags on WiFi. What can I do?","acceptedAnswer":{"@type":"Answer","text":"Use 5 GHz WiFi, drop resolution to 720p, close bandwidth-heavy apps, or switch to USB for guaranteed low latency."}},
+{"@type":"Question","name":"Does it keep working when I leave the app or the screen dims?","acceptedAnswer":{"@type":"Answer","text":"Yes. Streaming continues as an Android background service with a quiet notification and a built-in battery saver."}},
+{"@type":"Question","name":"Can it record video with sound?","acceptedAnswer":{"@type":"Answer","text":"The PC records the processed stream to MP4. The phone can record a hardware-encoded backup up to 4K with audio, independent of the WiFi connection."}},
+{"@type":"Question","name":"How do updates work?","acceptedAnswer":{"@type":"Answer","text":"New releases are published on GitHub. The desktop app checks for updates on launch; the APK you install manually."}},
+{"@type":"Question","name":"Why does Windows say 'unknown publisher'?","acceptedAnswer":{"@type":"Answer","text":"The app isn't code-signed yet. Choose More info then Run anyway. The source is public, you can inspect or build it yourself."}}
+]}
 </script>
 </head>
 <body>

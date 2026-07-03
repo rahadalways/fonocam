@@ -1,0 +1,13 @@
+{
+  "name": "Fonocam — Phone as PC Webcam",
+  "short_name": "Fonocam",
+  "description": "Use your Android phone as a free PC webcam over WiFi or USB. Works with Zoom, Meet, Discord and OBS.",
+  "start_url": "/camconnect/",
+  "scope": "/camconnect/",
+  "display": "standalone",
+  "background_color": "#14181d",
+  "theme_color": "#14181d",
+  "icons": [
+    { "src": "/camconnect/favicon.ico", "sizes": "any", "type": "image/x-icon" }
+  ]
+}
