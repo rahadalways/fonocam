@@ -3,117 +3,252 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Fonocam — Your phone is the camera</title>
-<meta name="description" content="Turn your Android phone into a premium PC webcam over WiFi or USB. Free, lightweight, no sign-up. Works with Zoom, Meet, Discord and OBS.">
+
+<!-- Primary SEO -->
+<title>Fonocam — Turn your Android phone into a PC webcam (free, WiFi & USB)</title>
+<meta name="description" content="Fonocam turns your Android phone into a premium PC webcam over WiFi or USB. Works with Zoom, Google Meet, Discord and OBS. Free, open source, no sign-up, no ads.">
+<meta name="keywords" content="phone as webcam, android webcam app, use phone as webcam, wireless webcam, usb webcam android, droidcam alternative, virtual camera, obs virtual camera, fonocam">
+<meta name="author" content="Rahad">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<link rel="canonical" href="https://rahadalways.github.io/camconnect/">
+<meta name="theme-color" content="#14181d">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Fonocam">
+<meta property="og:title" content="Fonocam — Your phone is the camera">
+<meta property="og:description" content="Turn your Android phone into a premium PC webcam over WiFi or USB. Free, open source, works with Zoom, Meet, Discord and OBS.">
+<meta property="og:url" content="https://rahadalways.github.io/camconnect/">
+<meta property="og:image" content="https://rahadalways.github.io/camconnect/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Fonocam - turn your Android phone into a PC webcam">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Fonocam — Your phone is the camera">
+<meta name="twitter:description" content="Turn your Android phone into a premium PC webcam over WiFi or USB. Free & open source.">
+<meta name="twitter:image" content="https://rahadalways.github.io/camconnect/og-image.png">
+
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 108 108'%3E%3Crect width='108' height='108' rx='20' fill='%2314181d'/%3E%3Ccircle cx='54' cy='54' r='24' fill='%23f2a93b'/%3E%3Ccircle cx='54' cy='54' r='17' fill='%2314181d'/%3E%3Ccircle cx='54' cy='54' r='11' fill='%23232b34'/%3E%3Ccircle cx='60' cy='46' r='4' fill='%23f2a93b'/%3E%3Ccircle cx='75' cy='71' r='4.5' fill='%23e5484d'/%3E%3C/svg%3E">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+
+<!-- Structured data: app + FAQ -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Fonocam",
+  "operatingSystem": "Windows 10, Windows 11, Android 7.0+",
+  "applicationCategory": "MultimediaApplication",
+  "description": "Turn your Android phone into a PC webcam over WiFi or USB. Works with Zoom, Google Meet, Discord and OBS.",
+  "url": "https://rahadalways.github.io/camconnect/",
+  "image": "https://rahadalways.github.io/camconnect/og-image.png",
+  "downloadUrl": "https://github.com/rahadalways/camconnect/releases/latest",
+  "author": { "@type": "Person", "name": "Rahad" },
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Is Fonocam really free?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. Everything you see today is free and open source - no ads, no account, no watermark. A one-time Pro upgrade with extras like full-HD streaming may come later, but the core app stays free." }
+    },
+    {
+      "@type": "Question",
+      "name": "Do I need OBS Studio to use Fonocam?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Only its virtual camera driver, which installs together with OBS Studio (free). You never have to open or learn OBS - Fonocam just uses the driver so Zoom, Meet and other apps can see your phone as a camera." }
+    },
+    {
+      "@type": "Question",
+      "name": "Does Fonocam work over USB?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. Enable USB debugging on the phone, plug in a cable and press USB in the desktop app. USB is faster and more stable than WiFi and charges your phone while streaming." }
+    },
+    {
+      "@type": "Question",
+      "name": "The video lags on WiFi. What can I do?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Use 720p with Medium quality for the smoothest stream, keep the phone near your router, or switch to a USB cable which removes WiFi from the equation entirely." }
+    },
+    {
+      "@type": "Question",
+      "name": "Does it keep working when I leave the app or the screen dims?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes. Streaming runs as a background service with a notification. The built-in battery saver dims the screen while streaming continues. Some phone brands pause the camera if the screen turns fully off, so the battery saver is the most reliable mode for long sessions." }
+    },
+    {
+      "@type": "Question",
+      "name": "Can Fonocam record video with sound?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Yes, in two places at once: the desktop records the processed stream on your PC, and the phone can record a smooth hardware-encoded backup up to 4K with microphone audio - even if the WiFi lags." }
+    },
+    {
+      "@type": "Question",
+      "name": "How do updates work?",
+      "acceptedAnswer": { "@type": "Answer", "text": "The Android app checks GitHub for new releases: Settings, Check for update, one tap to download. For the desktop app, download the latest installer from the releases page." }
+    },
+    {
+      "@type": "Question",
+      "name": "Why does Windows say unknown publisher?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Fonocam is not code-signed with a paid certificate, which is normal for free open-source tools. Choose More info, then Run anyway. The full source code is public on GitHub, so you can verify exactly what the app does." }
+    }
+  ]
+}
+</script>
+
 <style>
   :root{
     --bg:#14181d; --panel:#1c2229; --panel2:#232b34; --line:#2e3742;
-    --text:#e8ecef; --muted:#97a3ad; --accent:#f2a93b; --accent-d:#c8871f;
-    --live:#e5484d; --ok:#4cc38a;
+    --text:#e8ecef; --muted:#97a3ad; --faint:#5a6570;
+    --accent:#f2a93b; --accent-d:#c8871f; --live:#e5484d; --ok:#4cc38a;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html{scroll-behavior:smooth}
-  body{background:var(--bg);color:var(--text);font-family:Poppins,system-ui,sans-serif;line-height:1.65}
+  body{background:var(--bg);color:var(--text);font-family:Poppins,system-ui,sans-serif;line-height:1.65;overflow-x:hidden}
   .mono{font-family:"JetBrains Mono",monospace}
   a{color:inherit;text-decoration:none}
-  .wrap{max-width:1060px;margin:0 auto;padding:0 22px}
+  img,svg{max-width:100%}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
 
-  /* nav */
-  nav{position:sticky;top:0;z-index:50;background:rgba(20,24,29,.85);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
-  .nav-in{display:flex;align-items:center;gap:10px;height:64px}
-  .logo{width:34px;height:34px;flex:none}
-  .brand{font-size:19px;font-weight:700;letter-spacing:-.01em}
-  .nav-links{margin-left:auto;display:flex;align-items:center;gap:22px;font-size:14px;color:var(--muted)}
+  /* ---------- nav ---------- */
+  nav{position:sticky;top:0;z-index:50;background:rgba(20,24,29,.86);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  .nav-in{display:flex;align-items:center;gap:10px;height:62px}
+  .logo{width:32px;height:32px;flex:none}
+  .brand{font-size:18px;font-weight:700}
+  .nav-links{margin-left:auto;display:flex;align-items:center;gap:20px;font-size:14px;color:var(--muted)}
   .nav-links a:hover{color:var(--text)}
-  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#14181d;
-    font-weight:600;font-size:14.5px;padding:10px 20px;border-radius:10px;transition:.15s}
+  @media(max-width:720px){.nav-links a:not(.btn){display:none}}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;background:var(--accent);color:#14181d;
+    font-weight:600;font-size:14.5px;padding:10px 20px;border-radius:10px;transition:.15s;border:1px solid transparent}
   .btn:hover{background:var(--accent-d)}
-  .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+  .btn.ghost{background:transparent;color:var(--text);border-color:var(--line)}
   .btn.ghost:hover{border-color:var(--muted);background:var(--panel)}
 
-  /* hero */
-  header{padding:84px 0 40px;text-align:center}
-  .chip{display:inline-flex;align-items:center;gap:7px;font-size:12px;letter-spacing:.14em;
-    text-transform:uppercase;color:var(--accent);border:1px solid rgba(242,169,59,.35);
-    border-radius:999px;padding:5px 14px;margin-bottom:22px}
-  .chip i{width:7px;height:7px;border-radius:50%;background:var(--live);display:inline-block;animation:blink 1.6s infinite}
-  @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
-  @media (prefers-reduced-motion:reduce){.chip i{animation:none}}
-  h1{font-size:clamp(34px,6vw,58px);font-weight:700;letter-spacing:-.02em;line-height:1.12;text-wrap:balance}
+  /* ---------- hero: the viewfinder ---------- */
+  .vfwrap{padding:34px 22px 0;max-width:1240px;margin:0 auto}
+  .viewfinder{position:relative;border-radius:22px;border:1px solid var(--line);
+    background:
+      radial-gradient(90% 120% at 50% 0%, rgba(43,61,77,.55) 0%, rgba(23,34,44,.4) 45%, rgba(13,19,25,0) 80%),
+      var(--bg);
+    padding:96px 24px 84px;text-align:center;overflow:hidden}
+  .viewfinder::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:repeating-linear-gradient(0deg, rgba(255,255,255,.012) 0 2px, transparent 2px 4px)}
+  .corner{position:absolute;width:34px;height:34px;border:3px solid var(--accent);opacity:.9}
+  .c1{top:18px;left:18px;border-right:none;border-bottom:none;border-radius:6px 0 0 0}
+  .c2{top:18px;right:18px;border-left:none;border-bottom:none;border-radius:0 6px 0 0}
+  .c3{bottom:18px;left:18px;border-right:none;border-top:none;border-radius:0 0 0 6px}
+  .c4{bottom:18px;right:18px;border-left:none;border-top:none;border-radius:0 0 6px 0}
+  .osd{position:absolute;font-family:"JetBrains Mono",monospace;font-size:11.5px;letter-spacing:.12em;color:var(--muted)}
+  .osd.tl{top:30px;left:66px}
+  .osd.tr{top:30px;right:66px;color:var(--ok)}
+  .osd.bl{bottom:30px;left:66px}
+  .osd.br{bottom:30px;right:66px}
+  @media(max-width:760px){.osd.bl,.osd.br{display:none}}
+  .rec{position:absolute;top:26px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:8px;
+    font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.16em;color:var(--text);
+    background:rgba(229,72,77,.14);border:1px solid rgba(229,72,77,.4);border-radius:999px;padding:5px 15px}
+  .rec i{width:9px;height:9px;border-radius:50%;background:var(--live);animation:blink 1.5s infinite}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+  @media(prefers-reduced-motion:reduce){.rec i{animation:none}}
+  h1{font-size:clamp(36px,6.4vw,64px);font-weight:700;letter-spacing:-.02em;line-height:1.08;text-wrap:balance}
   h1 em{font-style:normal;color:var(--accent)}
-  .sub{max-width:56ch;margin:18px auto 0;color:var(--muted);font-size:17px}
-  .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:32px}
-  .cta .btn{padding:14px 26px;font-size:15.5px;border-radius:12px}
-  .cta small{display:block;width:100%;color:var(--muted);font-size:12.5px;margin-top:6px}
+  .sub{max-width:58ch;margin:20px auto 0;color:var(--muted);font-size:17px}
+  .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:34px}
+  .cta .btn{padding:15px 28px;font-size:15.5px;border-radius:12px}
+  .cta-meta{margin-top:14px;font-family:"JetBrains Mono",monospace;font-size:11.5px;letter-spacing:.08em;color:var(--faint)}
 
-  /* mock */
-  .mock{margin:56px auto 0;max-width:860px;display:flex;gap:26px;align-items:flex-end;justify-content:center;flex-wrap:wrap}
-  .win{flex:1 1 480px;max-width:600px;background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;
-    box-shadow:0 30px 80px rgba(0,0,0,.5)}
-  .tbar{display:flex;align-items:center;gap:8px;background:#171c22;padding:10px 14px;border-bottom:1px solid var(--line)}
-  .tbar i{width:10px;height:10px;border-radius:50%;background:#39434e}
-  .tbar span{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--muted);margin-left:6px}
-  .screen{background:radial-gradient(120% 90% at 35% 25%,#2b3d4d 0%,#17222c 55%,#0d1319 100%);
-    height:270px;position:relative}
-  .screen .tag{position:absolute;top:12px;left:14px;font-family:"JetBrains Mono",monospace;font-size:11px;color:rgba(255,255,255,.75)}
-  .screen .go{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
-    background:var(--accent);color:#14181d;font-weight:600;font-size:13px;border-radius:8px;padding:8px 18px;white-space:nowrap}
-  .phone{flex:0 0 150px;background:#0b0e11;border:2px solid #333c46;border-radius:26px;padding:10px 8px;
-    box-shadow:0 30px 60px rgba(0,0,0,.5)}
-  .phone .cam{width:56px;height:4px;border-radius:2px;background:#333c46;margin:0 auto 8px}
-  .phone .vf{border-radius:14px;height:240px;background:radial-gradient(120% 90% at 30% 20%,#2b3d4d 0%,#17222c 60%,#0d1319 100%);
-    position:relative}
-  .phone .rec{position:absolute;top:10px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:5px;
-    font-family:"JetBrains Mono",monospace;font-size:8.5px;color:#fff;background:rgba(76,195,138,.85);border-radius:4px;padding:2px 7px;white-space:nowrap}
-  .phone .ip{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);font-family:"JetBrains Mono",monospace;
-    font-size:9px;color:#fff;background:rgba(11,14,17,.8);border-radius:6px;padding:4px 8px;white-space:nowrap}
+  /* ---------- signal path ---------- */
+  .path{padding:64px 0 10px}
+  .path-row{display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:wrap}
+  .node{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 22px;text-align:center;min-width:150px}
+  .node .t{font-weight:600;font-size:14.5px}
+  .node .s{font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.1em;color:var(--muted);margin-top:2px}
+  .link{display:flex;flex-direction:column;align-items:center;padding:0 6px;min-width:86px}
+  .link .wire{width:100%;height:2px;background:repeating-linear-gradient(90deg,var(--accent) 0 7px,transparent 7px 14px);opacity:.55}
+  .link .lbl{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.14em;color:var(--accent);margin-top:6px}
+  @media(max-width:720px){.path-row{flex-direction:column;gap:0}.link{min-height:52px;min-width:0}.link .wire{width:2px;height:100%;background:repeating-linear-gradient(0deg,var(--accent) 0 7px,transparent 7px 14px)}}
 
-  /* sections */
-  section{padding:74px 0}
-  .eyebrow{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
-  h2{font-size:clamp(24px,3.5vw,34px);font-weight:700;letter-spacing:-.01em;text-wrap:balance}
-  .lead{color:var(--muted);max-width:60ch;margin-top:10px}
+  /* ---------- sections ---------- */
+  section{padding:76px 0}
+  .eyebrow{font-family:"JetBrains Mono",monospace;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+  h2{font-size:clamp(25px,3.6vw,36px);font-weight:700;letter-spacing:-.01em;text-wrap:balance}
+  .lead{color:var(--muted);max-width:62ch;margin-top:10px}
 
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;margin-top:36px}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px}
-  .card .ic{width:42px;height:42px;border-radius:10px;background:var(--panel2);border:1px solid var(--line);
+  /* bento features */
+  .bento{display:grid;grid-template-columns:repeat(6,1fr);gap:16px;margin-top:38px}
+  .b{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:26px;transition:border-color .2s}
+  .b:hover{border-color:#3d4956}
+  .b.w3{grid-column:span 3}
+  .b.w2{grid-column:span 2}
+  @media(max-width:860px){.b.w3,.b.w2{grid-column:span 6}}
+  .b .ic{width:42px;height:42px;border-radius:11px;background:var(--panel2);border:1px solid var(--line);
     display:flex;align-items:center;justify-content:center;font-size:19px;margin-bottom:14px}
-  .card h3{font-size:16.5px;font-weight:600;margin-bottom:6px}
-  .card p{color:var(--muted);font-size:14px}
+  .b h3{font-size:17px;font-weight:600;margin-bottom:6px}
+  .b p{color:var(--muted);font-size:14px}
+  .b .tagrow{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+  .tag{font-family:"JetBrains Mono",monospace;font-size:10.5px;letter-spacing:.08em;color:var(--muted);
+    border:1px solid var(--line);border-radius:6px;padding:3px 9px}
 
-  .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:36px;counter-reset:st}
-  .step{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px;counter-increment:st;position:relative}
-  .step::before{content:"0" counter(st);font-family:"JetBrains Mono",monospace;color:var(--accent);font-weight:700;font-size:13px}
-  .step h3{font-size:16px;font-weight:600;margin:10px 0 6px}
-  .step p{color:var(--muted);font-size:14px}
+  /* how it works */
+  .guide{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:38px;counter-reset:g}
+  .g{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:26px;counter-increment:g;position:relative}
+  .g::before{content:counter(g,upper-alpha);position:absolute;top:22px;right:24px;font-family:"JetBrains Mono",monospace;
+    font-size:15px;font-weight:700;color:var(--accent);opacity:.9}
+  .g h3{font-size:16.5px;font-weight:600;padding-right:36px}
+  .g p{color:var(--muted);font-size:14px;margin-top:8px}
+  .g p b{color:var(--text);font-weight:600}
+  .g .k{font-family:"JetBrains Mono",monospace;font-size:12.5px;color:var(--accent)}
+
+  /* specs */
+  .specbox{margin-top:38px;border:1px solid var(--line);border-radius:16px;overflow-x:auto;background:var(--panel)}
+  table{width:100%;border-collapse:collapse;font-size:14px;min-width:560px}
+  th,td{padding:13px 20px;text-align:left;border-bottom:1px solid var(--line)}
+  tr:last-child td{border-bottom:none}
+  th{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);background:var(--panel2)}
+  td:first-child{color:var(--muted);white-space:nowrap}
+  td .mono{font-size:13px}
+  .yes{color:var(--ok)} .no{color:var(--faint)}
 
   /* download band */
-  .band{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:44px 34px;text-align:center}
-  .band .cta{margin-top:26px}
-  .band .note{color:var(--muted);font-size:13px;margin-top:18px;max-width:58ch;margin-left:auto;margin-right:auto}
+  .band{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:52px 34px;text-align:center;overflow:hidden}
+  .band::before,.band::after{content:"";position:absolute;width:26px;height:26px;border:3px solid var(--accent);opacity:.7}
+  .band::before{top:14px;left:14px;border-right:none;border-bottom:none;border-radius:5px 0 0 0}
+  .band::after{bottom:14px;right:14px;border-left:none;border-top:none;border-radius:0 0 5px 0}
+  .band .note{color:var(--muted);font-size:13.5px;margin-top:20px;max-width:62ch;margin-left:auto;margin-right:auto}
+  .band .note a{color:var(--accent)}
 
   /* faq */
-  details{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 22px;margin-top:12px}
-  summary{cursor:pointer;font-weight:600;font-size:15px;list-style:none;display:flex;justify-content:space-between;align-items:center}
-  summary::after{content:"+";color:var(--accent);font-size:20px;font-weight:400}
+  details{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:18px 22px;margin-top:12px}
+  summary{cursor:pointer;font-weight:600;font-size:15px;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:14px}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:"+";color:var(--accent);font-size:21px;font-weight:400;flex:none}
   details[open] summary::after{content:"–"}
-  details p{color:var(--muted);font-size:14px;margin-top:10px;max-width:70ch}
+  details p{color:var(--muted);font-size:14px;margin-top:10px;max-width:72ch}
+  details p a{color:var(--accent)}
 
-  footer{border-top:1px solid var(--line);padding:34px 0;color:var(--muted);font-size:13.5px}
-  .foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-  .foot .logo{width:24px;height:24px}
-  .foot a{color:var(--text)}
-  .foot a:hover{color:var(--accent)}
-  .foot .right{margin-left:auto}
+  /* footer */
+  footer{border-top:1px solid var(--line);padding:46px 0 40px;color:var(--muted);font-size:13.5px}
+  .fgrid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:30px}
+  @media(max-width:720px){.fgrid{grid-template-columns:1fr}}
+  .fbrand{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  .fbrand .logo{width:26px;height:26px}
+  .fbrand b{color:var(--text);font-size:15px}
+  .fcol h4{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin-bottom:12px}
+  .fcol a{display:block;margin-bottom:9px;color:var(--muted)}
+  .fcol a:hover{color:var(--accent)}
+  .fbottom{margin-top:34px;padding-top:18px;border-top:1px solid var(--line);display:flex;gap:10px;flex-wrap:wrap;
+    font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.06em;color:var(--faint)}
 </style>
 </head>
 <body>
 
-<svg width="0" height="0" style="position:absolute">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
     <g id="lens">
       <circle cx="54" cy="54" r="30" fill="#f2a93b"/>
@@ -127,139 +262,273 @@
 
 <nav>
   <div class="wrap nav-in">
-    <svg class="logo" viewBox="0 0 108 108"><use href="#lens"/></svg>
+    <svg class="logo" viewBox="0 0 108 108" aria-hidden="true"><use href="#lens"/></svg>
     <span class="brand">Fonocam</span>
     <div class="nav-links">
       <a href="#features">Features</a>
-      <a href="#how">How it works</a>
+      <a href="#how">Setup guide</a>
+      <a href="#specs">Specs</a>
       <a href="#faq">FAQ</a>
       <a href="https://github.com/rahadalways/camconnect" target="_blank" rel="noopener">GitHub</a>
-      <a class="btn" href="#download">Download</a>
+      <a class="btn" href="#download">Download free</a>
     </div>
   </div>
 </nav>
 
-<header class="wrap">
-  <span class="chip"><i></i>Free · No sign-up · Open source</span>
-  <h1>Your phone is<br>the <em>camera</em>.</h1>
-  <p class="sub">Fonocam turns your Android phone into a premium PC webcam over WiFi or USB.
-     Sharper than any cheap webcam, with full control from your desktop.</p>
-  <div class="cta">
-    <a class="btn" href="https://github.com/rahadalways/camconnect/releases/latest/download/Fonocam-Setup.exe">
-      &#11015;&#65038; Download for Windows
-    </a>
-    <a class="btn ghost" href="https://github.com/rahadalways/camconnect/releases/latest/download/Fonocam.apk">
-      Get the Android app (APK)
-    </a>
-    <small>Windows 10/11 · Android 7.0+ · about 10 MB on your phone</small>
-  </div>
+<!-- ============ HERO: the viewfinder ============ -->
+<div class="vfwrap">
+  <header class="viewfinder">
+    <span class="corner c1"></span><span class="corner c2"></span>
+    <span class="corner c3"></span><span class="corner c4"></span>
+    <span class="rec"><i></i>LIVE</span>
+    <span class="osd tl">CAM 01 · PHONE</span>
+    <span class="osd tr">PC CONNECTED</span>
+    <span class="osd bl">1280x720 · 30FPS</span>
+    <span class="osd br">WIFI / USB</span>
 
-  <div class="mock" aria-hidden="true">
-    <div class="phone">
-      <div class="cam"></div>
-      <div class="vf">
-        <span class="rec">PC CONNECTED</span>
-        <span class="ip">192.168.0.103:8080</span>
-      </div>
+    <h1>Your phone is<br>the <em>camera</em>.</h1>
+    <p class="sub">Fonocam turns your Android phone into a premium PC webcam over WiFi or USB —
+       sharper than any budget webcam, with every control on your desktop.</p>
+    <div class="cta">
+      <a class="btn" href="https://github.com/rahadalways/camconnect/releases/latest/download/Fonocam-Setup.exe">
+        &#11015;&#65038; Download for Windows
+      </a>
+      <a class="btn ghost" href="https://github.com/rahadalways/camconnect/releases/latest/download/Fonocam.apk">
+        Get the Android app
+      </a>
     </div>
-    <div class="win">
-      <div class="tbar"><i></i><i></i><i></i><span>Fonocam Desktop — Connected</span></div>
-      <div class="screen">
-        <span class="tag">● LIVE · 1280x720 · 30 fps</span>
-        <span class="go">Start Virtual Webcam</span>
-      </div>
-    </div>
-  </div>
-</header>
+    <p class="cta-meta">FREE · OPEN SOURCE · NO ACCOUNT · WINDOWS 10/11 · ANDROID 7+</p>
+  </header>
+</div>
 
+<!-- ============ signal path ============ -->
+<div class="path wrap" aria-label="How the video travels">
+  <div class="path-row">
+    <div class="node"><div class="t">📱 Your phone</div><div class="s">CAMERA + APP</div></div>
+    <div class="link"><div class="wire"></div><div class="lbl">WIFI / USB</div></div>
+    <div class="node"><div class="t">🖥️ Fonocam Desktop</div><div class="s">PREVIEW + CONTROL</div></div>
+    <div class="link"><div class="wire"></div><div class="lbl">VIRTUAL CAM</div></div>
+    <div class="node"><div class="t">🎦 Zoom · Meet · OBS</div><div class="s">ANY VIDEO APP</div></div>
+  </div>
+</div>
+
+<!-- ============ features ============ -->
 <section id="features" class="wrap">
   <p class="eyebrow">Features</p>
   <h2>Everything a webcam should be</h2>
-  <p class="lead">Your phone already has a better camera than a $100 webcam. Fonocam puts it to work.</p>
-  <div class="grid">
-    <div class="card"><div class="ic">🎥</div><h3>Real virtual webcam</h3>
-      <p>Shows up as a camera in Zoom, Google Meet, Discord, OBS — any app that uses a webcam.</p></div>
-    <div class="card"><div class="ic">📡</div><h3>Zero setup</h3>
-      <p>Press Start on the phone and it appears on your PC automatically. No IP addresses, no typing.</p></div>
-    <div class="card"><div class="ic">🔌</div><h3>WiFi or USB</h3>
-      <p>Go wireless around the room, or plug in a cable for rock-solid, low-latency video that also charges your phone.</p></div>
-    <div class="card"><div class="ic">🎛️</div><h3>Full desktop control</h3>
-      <p>Rotate, mirror, flip, brightness, contrast, zoom, torch, camera switch — all from the PC, mid-call.</p></div>
-    <div class="card"><div class="ic">📼</div><h3>Record everywhere</h3>
-      <p>Record on the PC with your adjustments applied, plus an HD backup recording on the phone itself.</p></div>
-    <div class="card"><div class="ic">🪟</div><h3>Floating facecam</h3>
-      <p>Pop the preview into a small always-on-top rounded window — perfect corner cam for screen recordings.</p></div>
-    <div class="card"><div class="ic">🔋</div><h3>Runs in the background</h3>
-      <p>Leave the app, dim the screen — streaming keeps going with a battery saver and a quiet notification.</p></div>
-    <div class="card"><div class="ic">⚡</div><h3>Light and honest</h3>
-      <p>~10 MB app, no ads, no account, no tracking. Updates come straight from GitHub inside the app.</p></div>
+  <p class="lead">Your phone already has a better sensor than a $100 webcam. Fonocam puts it to work — and gives you a control room on the desktop.</p>
+
+  <div class="bento">
+    <div class="b w3">
+      <div class="ic">🎛️</div>
+      <h3>A control room on your PC</h3>
+      <p>Rotate, mirror, flip, brightness, contrast, zoom, torch, camera switch, stream quality — everything adjustable from the desktop, live, mid-call. The phone stays on its stand; you never touch it.</p>
+      <div class="tagrow"><span class="tag">ROTATE</span><span class="tag">MIRROR</span><span class="tag">BRIGHTNESS</span><span class="tag">ZOOM</span><span class="tag">TORCH</span><span class="tag">QUALITY</span></div>
+    </div>
+    <div class="b w3">
+      <div class="ic">🎥</div>
+      <h3>A real virtual webcam</h3>
+      <p>Fonocam registers as a genuine camera on Windows. Open Zoom, Google Meet, Discord, Teams or OBS and simply pick it from the camera list — no plugins, no capture-card tricks.</p>
+      <div class="tagrow"><span class="tag">ZOOM</span><span class="tag">MEET</span><span class="tag">DISCORD</span><span class="tag">TEAMS</span><span class="tag">OBS</span></div>
+    </div>
+    <div class="b w2">
+      <div class="ic">📡</div>
+      <h3>Zero-typing setup</h3>
+      <p>Press Start on the phone and it appears in the desktop app by itself. No IP addresses, no ports, no pairing codes.</p>
+    </div>
+    <div class="b w2">
+      <div class="ic">🔌</div>
+      <h3>WiFi or USB</h3>
+      <p>Wireless freedom around the room, or a cable for rock-solid low-latency video that charges the phone while you stream.</p>
+    </div>
+    <div class="b w2">
+      <div class="ic">📼</div>
+      <h3>Record on both ends</h3>
+      <p>The PC records the processed stream; the phone records a smooth hardware-encoded backup up to 4K with audio — immune to WiFi hiccups.</p>
+    </div>
+    <div class="b w2">
+      <div class="ic">🪟</div>
+      <h3>Floating facecam</h3>
+      <p>Pop the preview into a rounded always-on-top mini window. Drag it to a corner, scroll to resize — perfect for screen recordings.</p>
+    </div>
+    <div class="b w2">
+      <div class="ic">🔋</div>
+      <h3>Runs in the background</h3>
+      <p>Leave the app or let the screen dim — streaming continues as a background service with a quiet notification and a battery saver.</p>
+    </div>
+    <div class="b w2">
+      <div class="ic">⚡</div>
+      <h3>Light and honest</h3>
+      <p>13 MB on your phone. No ads, no account, no tracking, no watermark. The full source code is public on GitHub.</p>
+    </div>
   </div>
 </section>
 
+<!-- ============ how it works: A to Z ============ -->
 <section id="how" class="wrap">
-  <p class="eyebrow">How it works</p>
-  <h2>Live in under a minute</h2>
-  <div class="steps">
-    <div class="step"><h3>Install both apps</h3>
-      <p>Fonocam on your Android phone, Fonocam Desktop on your Windows PC. Both are single downloads below.</p></div>
-    <div class="step"><h3>Press Start, then Connect</h3>
-      <p>Start streaming on the phone — it pops up in the desktop app's device list on the same WiFi. Click Connect.</p></div>
-    <div class="step"><h3>Pick the camera in any app</h3>
-      <p>Hit Start Virtual Webcam and choose the camera in Zoom, Meet or OBS. That's it — you're live.</p></div>
+  <p class="eyebrow">Setup guide</p>
+  <h2>From download to live — A to Z</h2>
+  <p class="lead">One-time setup takes about three minutes. After that it's two taps: Start on the phone, Connect on the PC.</p>
+
+  <div class="guide">
+    <div class="g">
+      <h3>Install the Windows app</h3>
+      <p>Download <b>Fonocam-Setup.exe</b> below and run it. If SmartScreen asks, choose <span class="k">More info → Run anyway</span> — the app isn't code-signed yet, and the source is public.</p>
+    </div>
+    <div class="g">
+      <h3>Install the OBS driver (once)</h3>
+      <p>Fonocam uses the OBS Virtual Camera driver to appear as a real webcam. Install <b>OBS Studio</b> from obsproject.com once — you never need to open it.</p>
+    </div>
+    <div class="g">
+      <h3>Install the Android app</h3>
+      <p>Download <b>Fonocam.apk</b> on your phone and install it. Android will ask to allow installs from your browser — allow it, this is normal for apps outside the Play Store.</p>
+    </div>
+    <div class="g">
+      <h3>Press Start on the phone</h3>
+      <p>Open Fonocam, allow the camera and microphone, and tap the big <span class="k">▶ Start</span> button. The status chip switches to <span class="k">WAITING FOR PC</span>.</p>
+    </div>
+    <div class="g">
+      <h3>Connect from the desktop</h3>
+      <p>Open Fonocam on the PC — your phone is already in the device list (same WiFi). Click <span class="k">Connect</span>. Live preview appears with FPS and resolution.</p>
+    </div>
+    <div class="g">
+      <h3>Start the virtual webcam</h3>
+      <p>Press <span class="k">Start Virtual Webcam</span>. In Zoom, Meet, Discord or OBS, pick the camera named <b>OBS Virtual Camera</b>. You're live.</p>
+    </div>
+    <div class="g">
+      <h3>Optional: go USB</h3>
+      <p>Enable <b>Developer options → USB debugging</b> on the phone, plug in the cable and press <span class="k">USB</span> in the desktop app — lower latency, zero WiFi drops, and the phone charges.</p>
+    </div>
+    <div class="g">
+      <h3>Optional: tune and record</h3>
+      <p>Use the <b>Video</b> and <b>Phone</b> tabs to frame and tune the image, hit <span class="k">⏺</span> to record on the PC, or the phone's record button for a 4K backup with sound.</p>
+    </div>
   </div>
 </section>
 
+<!-- ============ specs ============ -->
+<section id="specs" class="wrap">
+  <p class="eyebrow">Specs</p>
+  <h2>Under the hood</h2>
+  <div class="specbox">
+    <table>
+      <tr><th>Item</th><th>Detail</th></tr>
+      <tr><td>Streaming</td><td><span class="mono">MJPEG over HTTP · 480p / 720p / 1080p · up to 30 fps</span></td></tr>
+      <tr><td>Discovery</td><td><span class="mono">Automatic on the local network (UDP beacon, port 4748)</span></td></tr>
+      <tr><td>Connections</td><td><span class="mono">WiFi · USB (adb port-forward)</span></td></tr>
+      <tr><td>Virtual camera</td><td><span class="mono">OBS Virtual Camera driver · Fit / Fill framing · 30 or 60 fps output</span></td></tr>
+      <tr><td>Recording</td><td><span class="mono">PC: processed stream (MP4) · Phone: hardware-encoded up to 4K + audio</span></td></tr>
+      <tr><td>Requirements</td><td><span class="mono">Windows 10/11 · Android 7.0+ · same network or a USB cable</span></td></tr>
+      <tr><td>Size</td><td><span class="mono">Android app ~13 MB · Windows app ~72 MB</span></td></tr>
+      <tr><td>Privacy</td><td><span class="mono">No account · no cloud · video never leaves your network</span></td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ============ comparison ============ -->
+<section class="wrap">
+  <p class="eyebrow">Compare</p>
+  <h2>Why not just buy a webcam?</h2>
+  <div class="specbox" style="margin-top:38px">
+    <table>
+      <tr><th></th><th>Fonocam + your phone</th><th>Budget webcam ($20–40)</th></tr>
+      <tr><td>Image quality</td><td class="yes">Your phone's real camera sensor</td><td class="no">Small plastic lens, soft 720p</td></tr>
+      <tr><td>Low light</td><td class="yes">Phone-grade processing</td><td class="no">Grainy</td></tr>
+      <tr><td>Price</td><td class="yes">Free</td><td class="no">$20–40</td></tr>
+      <tr><td>Wireless</td><td class="yes">Yes — place it anywhere</td><td class="no">Cable to the monitor</td></tr>
+      <tr><td>Desktop controls</td><td class="yes">Rotate, tune, zoom, record</td><td class="no">Usually none</td></tr>
+      <tr><td>Backup recording</td><td class="yes">Up to 4K with audio</td><td class="no">No</td></tr>
+    </table>
+  </div>
+</section>
+
+<!-- ============ download ============ -->
 <section class="wrap" id="download">
   <div class="band">
     <p class="eyebrow">Download</p>
     <h2>Get Fonocam — free</h2>
     <div class="cta">
       <a class="btn" href="https://github.com/rahadalways/camconnect/releases/latest/download/Fonocam-Setup.exe">
-        &#11015;&#65038; Fonocam for Windows (.exe)
+        &#11015;&#65038; Fonocam for Windows
       </a>
       <a class="btn ghost" href="https://github.com/rahadalways/camconnect/releases/latest/download/Fonocam.apk">
         Fonocam for Android (.apk)
       </a>
     </div>
-    <p class="note">The virtual webcam uses the OBS Virtual Camera driver — install
-      <a href="https://obsproject.com" target="_blank" rel="noopener" style="color:var(--accent)">OBS Studio</a> once if you don't have it.
-      On first run Windows SmartScreen may ask — choose "More info → Run anyway".
-      On Android allow "Install unknown apps" for the APK.
+    <p class="note">Windows installer with Start Menu shortcut and uninstaller.
       Prefer no installer? A portable exe is on the
-      <a href="https://github.com/rahadalways/camconnect/releases/latest" target="_blank" rel="noopener" style="color:var(--accent)">releases page</a>.</p>
+      <a href="https://github.com/rahadalways/camconnect/releases/latest" target="_blank" rel="noopener">releases page</a>.
+      All builds are compiled publicly on GitHub Actions from the open source code.</p>
   </div>
 </section>
 
+<!-- ============ faq ============ -->
 <section id="faq" class="wrap">
   <p class="eyebrow">FAQ</p>
   <h2>Questions, answered</h2>
   <details>
     <summary>Is Fonocam really free?</summary>
-    <p>Yes — everything you see today is free and open source. A one-time Pro upgrade with extras like full-HD output may come later, but the core app stays free.</p>
+    <p>Yes. Everything you see today is free and open source — no ads, no account, no watermark. A one-time Pro upgrade with extras like full-HD streaming may come later, but the core app stays free.</p>
   </details>
   <details>
     <summary>Do I need OBS Studio?</summary>
-    <p>Only its virtual camera driver, which installs with OBS Studio (free). You don't need to run or learn OBS — Fonocam just uses the driver so other apps can see your phone as a camera.</p>
+    <p>Only its virtual camera driver, which installs together with <a href="https://obsproject.com" target="_blank" rel="noopener">OBS Studio</a> (free). You never have to open or learn OBS — Fonocam just uses the driver so Zoom, Meet and other apps can see your phone as a camera.</p>
+  </details>
+  <details>
+    <summary>Does it work over USB?</summary>
+    <p>Yes. Enable USB debugging on the phone, plug in a cable and press USB in the desktop app. USB is faster and more stable than WiFi — and it charges your phone while streaming.</p>
   </details>
   <details>
     <summary>The video lags on WiFi. What can I do?</summary>
-    <p>Use 720p with Medium quality for the smoothest experience, keep the phone near your router — or plug in a USB cable, which is faster than WiFi and charges the phone while you stream.</p>
+    <p>Use 720p with Medium quality for the smoothest stream, keep the phone near your router — or switch to a USB cable, which takes WiFi out of the equation entirely.</p>
   </details>
   <details>
-    <summary>Does it work when the phone screen is off?</summary>
-    <p>Streaming runs as a background service with a notification. Use the built-in battery saver (screen dims but stays on) for the most reliable long sessions — some phone brands pause the camera if the screen turns fully off.</p>
+    <summary>Does it keep working when I leave the app or the screen dims?</summary>
+    <p>Yes — streaming runs as a background service with a notification. The built-in battery saver dims the screen while streaming continues. Some phone brands pause the camera if the screen turns fully off, so the battery saver is the most reliable mode for long sessions.</p>
+  </details>
+  <details>
+    <summary>Can it record video with sound?</summary>
+    <p>Yes, in two places at once: the desktop records the processed stream on your PC, and the phone records a smooth hardware-encoded backup up to 4K with microphone audio — even if the WiFi lags mid-session.</p>
   </details>
   <details>
     <summary>How do updates work?</summary>
-    <p>The Android app checks GitHub for new releases — Settings → Check for update, then one tap to download. For the desktop app, grab the latest .exe from the same releases page.</p>
+    <p>The Android app checks GitHub for new releases — Settings → Check for update → one tap to download. For the desktop app, grab the latest installer from the releases page.</p>
+  </details>
+  <details>
+    <summary>Why does Windows say "unknown publisher"?</summary>
+    <p>Fonocam isn't code-signed with a paid certificate, which is normal for free open-source tools. Choose "More info → Run anyway". The full source code is <a href="https://github.com/rahadalways/camconnect" target="_blank" rel="noopener">public on GitHub</a>, so you can verify exactly what the app does.</p>
   </details>
 </section>
 
+<!-- ============ footer ============ -->
 <footer>
-  <div class="wrap foot">
-    <svg class="logo" viewBox="0 0 108 108"><use href="#lens"/></svg>
-    <span>Fonocam — built by Rahad</span>
-    <span class="right"><a href="https://github.com/rahadalways/camconnect" target="_blank" rel="noopener">Source on GitHub</a></span>
+  <div class="wrap">
+    <div class="fgrid">
+      <div>
+        <div class="fbrand">
+          <svg class="logo" viewBox="0 0 108 108" aria-hidden="true"><use href="#lens"/></svg>
+          <b>Fonocam</b>
+        </div>
+        <p>Turn your Android phone into a premium PC webcam over WiFi or USB.
+           Free, open source, built by Rahad.</p>
+      </div>
+      <div class="fcol">
+        <h4>Product</h4>
+        <a href="#features">Features</a>
+        <a href="#how">Setup guide</a>
+        <a href="#specs">Specs</a>
+        <a href="#faq">FAQ</a>
+      </div>
+      <div class="fcol">
+        <h4>Project</h4>
+        <a href="https://github.com/rahadalways/camconnect" target="_blank" rel="noopener">Source on GitHub</a>
+        <a href="https://github.com/rahadalways/camconnect/releases" target="_blank" rel="noopener">All releases</a>
+        <a href="https://github.com/rahadalways/camconnect/issues" target="_blank" rel="noopener">Report an issue</a>
+      </div>
+    </div>
+    <div class="fbottom">
+      <span>© 2026 FONOCAM</span><span>·</span><span>MADE WITH 📱 + 🖥️</span><span>·</span><span>YOUR VIDEO NEVER LEAVES YOUR NETWORK</span>
+    </div>
   </div>
 </footer>
 

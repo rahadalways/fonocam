@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://rahadalways.github.io/camconnect/sitemap.xml
