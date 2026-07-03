@@ -6,7 +6,8 @@ preview, and outputs the video as a virtual webcam that Zoom / Meet /
 Discord / OBS can use.
 
 Requires: customtkinter, opencv-python, pyvirtualcam, pillow, numpy
-Virtual webcam needs the OBS Virtual Camera driver (install OBS Studio once).
+The virtual webcam uses the bundled Unity Capture driver (installed by the
+Windows setup); it also works with the OBS Virtual Camera as a fallback.
 """
 
 import json
@@ -866,9 +867,20 @@ class FonocamApp(ctk.CTk):
         import pyvirtualcam
         w, h = VCAM_SIZES[self.res_seg.get()]
         fps = int(self.fps_seg.get())
-        try:
-            cam = pyvirtualcam.Camera(width=w, height=h, fps=fps, print_fps=False)
-        except Exception as e:
+        # Prefer our bundled Unity Capture driver (installed by the setup, so
+        # no OBS needed); fall back to OBS Virtual Camera, then to any backend.
+        cam = None
+        last_err = None
+        for backend in ("unitycapture", "obs", None):
+            try:
+                kw = {"backend": backend} if backend else {}
+                cam = pyvirtualcam.Camera(width=w, height=h, fps=fps,
+                                          print_fps=False, **kw)
+                break
+            except Exception as e:
+                last_err = e
+                cam = None
+        if cam is None:
             self.vcam_running = False
             self.after(0, lambda: (
                 self.vcam_btn.configure(text="Start Virtual Webcam",
@@ -876,10 +888,10 @@ class FonocamApp(ctk.CTk):
                 messagebox.showerror(
                     "Virtual Webcam",
                     "Could not start the virtual webcam.\n\n"
-                    "This feature needs the OBS Virtual Camera driver.\n"
-                    "Install OBS Studio (free) from obsproject.com,\n"
-                    "then try again.\n\n"
-                    f"Error: {e}")))
+                    "Install Fonocam using the Windows installer (it sets up\n"
+                    "the virtual camera automatically), or install OBS Studio\n"
+                    "(free) from obsproject.com, then try again.\n\n"
+                    f"Error: {last_err}")))
             return
         canvas = np.zeros((h, w, 3), dtype=np.uint8)
         try:

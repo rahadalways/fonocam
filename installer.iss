@@ -17,7 +17,8 @@ OutputBaseFilename=Fonocam-Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
-PrivilegesRequired=lowest
+; admin so we can register the Unity Capture virtual-camera driver
+PrivilegesRequired=admin
 DisableProgramGroupPage=yes
 
 [Tasks]
@@ -25,6 +26,8 @@ Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "A
 
 [Files]
 Source: "dist\Fonocam.exe"; DestDir: "{app}"; Flags: ignoreversion
+; bundled virtual-camera driver (so users don't need OBS)
+Source: "UnityCaptureFilter64bit.dll"; DestDir: "{app}"; Flags: ignoreversion regserver
 
 [Icons]
 Name: "{group}\Fonocam"; Filename: "{app}\Fonocam.exe"

@@ -64,7 +64,7 @@ const features = [
 
 const setupSteps = [
   { letter: "A", title: "Install the Windows app", body: "Download Fonocam-Setup.exe below and run it. If SmartScreen asks, choose More info → Run anyway, the app isn't code-signed yet, and the source is public." },
-  { letter: "B", title: "Install the OBS driver (once)", body: "Fonocam uses the OBS Virtual Camera driver to appear as a real webcam. Install OBS Studio from obsproject.com once, you never need to open it." },
+  { letter: "B", title: "No OBS needed", body: "The Windows installer sets up Fonocam's own virtual camera automatically. Using the portable exe instead? Install OBS Studio once as a fallback." },
   { letter: "C", title: "Install the Android app", body: "Download Fonocam.apk on your phone and install it. Android will ask to allow installs from your browser, allow it, this is normal for apps outside the Play Store." },
   { letter: "D", title: "Press Start on the phone", body: "Open Fonocam, allow the camera and microphone, and tap the big ▶ start button. The status chip switches to WAITING FOR PC." },
   { letter: "E", title: "Connect from the desktop", body: "Open Fonocam on the PC, your phone is already in the device list (same WiFi). Click Connect. Live preview appears with FPS and resolution." },
@@ -95,7 +95,7 @@ const compare = [
 
 const faqs = [
   { q: "Is Fonocam really free?", a: "Yes, completely free, no ads, no account, no premium tier. The full source code is public on GitHub and every release is compiled publicly on GitHub Actions." },
-  { q: "Do I need OBS Studio?", a: "You install it once so Windows registers the OBS Virtual Camera driver. After that you never need to open OBS, Fonocam pipes video into the driver on its own." },
+  { q: "Do I need OBS Studio?", a: "No. The Windows installer sets up Fonocam's own virtual camera (Unity Capture) automatically. OBS Virtual Camera also works as a fallback if you already have it or use the portable version." },
   { q: "Does it work over USB?", a: "Yes. Enable USB debugging on the phone, plug in the cable and press USB in the desktop app. You get lower latency, zero WiFi drops, and the phone charges while streaming." },
   { q: "The video lags on WiFi. What can I do?", a: "Use 5 GHz WiFi, drop resolution to 720p, close bandwidth-heavy apps, or switch to USB for guaranteed low latency." },
   { q: "Does it keep working when I leave the app or the screen dims?", a: "Yes. Streaming continues as an Android background service with a quiet notification and a built-in battery saver." },

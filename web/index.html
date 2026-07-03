@@ -63,7 +63,7 @@
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"HowTo","name":"How to use your Android phone as a PC webcam with Fonocam","description":"Set up Fonocam on Windows and Android to use your phone as a webcam for Zoom, Meet, Discord and OBS.","totalTime":"PT3M","tool":[{"@type":"HowToTool","name":"Android phone (7.0+)"},{"@type":"HowToTool","name":"Windows 10 or 11 PC"}],"step":[
 {"@type":"HowToStep","name":"Install the Windows app","text":"Download Fonocam-Setup.exe and run it. If SmartScreen asks, choose More info then Run anyway."},
-{"@type":"HowToStep","name":"Install the OBS driver once","text":"Install OBS Studio from obsproject.com once so Windows registers the virtual camera driver. You never need to open OBS."},
+{"@type":"HowToStep","name":"No OBS needed","text":"The Windows installer sets up Fonocam's own virtual camera automatically. With the portable exe, install OBS Studio once as a fallback."},
 {"@type":"HowToStep","name":"Install the Android app","text":"Download Fonocam.apk on your phone and install it, allowing installs from your browser."},
 {"@type":"HowToStep","name":"Press Start on the phone","text":"Open Fonocam, allow the camera and microphone, and tap the Start button."},
 {"@type":"HowToStep","name":"Connect from the desktop","text":"Open Fonocam on the PC. Your phone appears in the device list on the same WiFi. Click Connect."},
@@ -73,7 +73,7 @@
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
 {"@type":"Question","name":"Is Fonocam really free?","acceptedAnswer":{"@type":"Answer","text":"Yes, completely free, no ads, no account, no premium tier. The full source code is public on GitHub and every release is compiled publicly on GitHub Actions."}},
-{"@type":"Question","name":"Do I need OBS Studio?","acceptedAnswer":{"@type":"Answer","text":"You install it once so Windows registers the OBS Virtual Camera driver. After that you never need to open OBS, Fonocam pipes video into the driver on its own."}},
+{"@type":"Question","name":"Do I need OBS Studio?","acceptedAnswer":{"@type":"Answer","text":"No. The Windows installer sets up Fonocam's own virtual camera (Unity Capture) automatically. OBS Virtual Camera also works as a fallback if you already have it or use the portable version."}},
 {"@type":"Question","name":"Does it work over USB?","acceptedAnswer":{"@type":"Answer","text":"Yes. Enable USB debugging on the phone, plug in the cable and press USB in the desktop app. You get lower latency, zero WiFi drops, and the phone charges while streaming."}},
 {"@type":"Question","name":"The video lags on WiFi. What can I do?","acceptedAnswer":{"@type":"Answer","text":"Use 5 GHz WiFi, drop resolution to 720p, close bandwidth-heavy apps, or switch to USB for guaranteed low latency."}},
 {"@type":"Question","name":"Does it keep working when I leave the app or the screen dims?","acceptedAnswer":{"@type":"Answer","text":"Yes. Streaming continues as an Android background service with a quiet notification and a built-in battery saver."}},

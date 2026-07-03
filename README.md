@@ -50,7 +50,7 @@ Your phone already has a better camera than a $100 webcam. Fonocam puts it to wo
 ### 🖥️ Windows
 
 1. Download **[Fonocam-Setup.exe](https://github.com/rahadalways/fonocam/releases/latest/download/Fonocam-Setup.exe)** and run it. On first launch choose **More info → Run anyway** (the app isn't code-signed yet).
-2. Install **[OBS Studio](https://obsproject.com)** once — it registers the virtual-camera driver. You never have to open it.
+2. That's it — the installer sets up Fonocam's own virtual camera. *(Portable exe instead? Install [OBS Studio](https://obsproject.com) once as a fallback.)*
 
 ### 📱 Android
 
