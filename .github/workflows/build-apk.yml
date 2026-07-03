@@ -33,17 +33,17 @@ jobs:
         run: gradle assembleRelease
 
       - name: Rename APK
-        run: cp app/build/outputs/apk/release/app-release.apk CamConnect-v1.0.${{ github.run_number }}.apk
+        run: cp app/build/outputs/apk/release/app-release.apk Fonocam-v1.0.${{ github.run_number }}.apk
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: CamConnect-APK
-          path: CamConnect-v*.apk
+          name: Fonocam-APK
+          path: Fonocam-v*.apk
 
       - name: Publish release (for in-app updates)
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.${{ github.run_number }}
-          name: CamConnect v1.0.${{ github.run_number }}
-          files: CamConnect-v*.apk
+          name: Fonocam v1.0.${{ github.run_number }}
+          files: Fonocam-v*.apk

@@ -43,7 +43,7 @@ class StreamService : LifecycleService() {
         @Volatile
         var instance: StreamService? = null
 
-        const val CHANNEL_ID = "camconnect_stream"
+        const val CHANNEL_ID = "fonocam_stream"
         const val NOTIF_ID = 1
         const val ACTION_STOP = "com.example.action.STOP"
     }
@@ -79,7 +79,7 @@ class StreamService : LifecycleService() {
         }
         if (server != null) return START_STICKY // already running
 
-        val prefs = getSharedPreferences("camconnect_prefs", Context.MODE_PRIVATE)
+        val prefs = getSharedPreferences("fonocam_prefs", Context.MODE_PRIVATE)
         val port = prefs.getInt("port", 8080)
         targetResolution = when (prefs.getString("resolution", "720p")) {
             "1080p" -> android.util.Size(1920, 1080)
@@ -113,7 +113,7 @@ class StreamService : LifecycleService() {
     private fun startForegroundNotification() {
         if (Build.VERSION.SDK_INT >= 26) {
             val channel = NotificationChannel(
-                CHANNEL_ID, "CamConnect streaming", NotificationManager.IMPORTANCE_LOW
+                CHANNEL_ID, "Fonocam streaming", NotificationManager.IMPORTANCE_LOW
             )
             getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
         }
@@ -126,7 +126,7 @@ class StreamService : LifecycleService() {
         )
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_notification)
-            .setContentTitle("CamConnect is streaming")
+            .setContentTitle("Fonocam is streaming")
             .setContentText("Your phone is working as a webcam")
             .setOngoing(true)
             .setContentIntent(openPending)
@@ -240,18 +240,18 @@ class StreamService : LifecycleService() {
         server?.frameQuality = q
     }
 
-    // ---- on-phone backup recording (saved to Movies/CamConnect) ----
+    // ---- on-phone backup recording (saved to Movies/Fonocam) ----
     fun startRecording(): Boolean {
         val vc = videoCapture ?: return false
         if (activeRecording != null) return true
         return try {
-            val name = SimpleDateFormat("'CamConnect_'yyyyMMdd_HHmmss'.mp4'", Locale.US)
+            val name = SimpleDateFormat("'Fonocam_'yyyyMMdd_HHmmss'.mp4'", Locale.US)
                 .format(System.currentTimeMillis())
             val values = ContentValues().apply {
                 put(MediaStore.Video.Media.DISPLAY_NAME, name)
                 put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
                 if (Build.VERSION.SDK_INT >= 29) {
-                    put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/CamConnect")
+                    put(MediaStore.Video.Media.RELATIVE_PATH, "Movies/Fonocam")
                 }
             }
             val options = MediaStoreOutputOptions.Builder(

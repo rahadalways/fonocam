@@ -42,7 +42,7 @@ class WebcamHttpServer(
     var streamRotation = 0
 
     // PIN auth is kept in the protocol for compatibility but disabled by
-    // default: CamConnect is meant for your own home network
+    // default: Fonocam is meant for your own home network
     @Volatile
     var isSecurityEnabled = false
 
@@ -77,7 +77,7 @@ class WebcamHttpServer(
         executor.execute {
             try {
                 serverSocket = ServerSocket(port)
-                Log.d("WebcamHttpServer", "CamConnect server started on port $port")
+                Log.d("WebcamHttpServer", "Fonocam server started on port $port")
 
                 while (isRunning.get()) {
                     val socket = serverSocket?.accept() ?: break
@@ -99,7 +99,7 @@ class WebcamHttpServer(
                 while (isRunning.get()) {
                     try {
                         val safeName = deviceName.replace("\"", "").take(40)
-                        val msg = """{"app":"camconnect","name":"$safeName","port":$port}"""
+                        val msg = """{"app":"fonocam","name":"$safeName","port":$port}"""
                         val bytes = msg.toByteArray()
                         sock.send(java.net.DatagramPacket(bytes, bytes.size, target, DISCOVERY_PORT))
                     } catch (e: Exception) {

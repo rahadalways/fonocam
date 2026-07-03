@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "CamConnect"
+rootProject.name = "Fonocam"
 
 include(":app")

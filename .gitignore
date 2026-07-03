@@ -21,4 +21,4 @@ __pycache__/
 node_modules/
 pc-server/key.pem
 pc-server/cert.pem
-camconnect_settings.json
+fonocam_settings.json

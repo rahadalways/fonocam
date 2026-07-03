@@ -1,11 +1,11 @@
-# CamConnect
+# Fonocam
 
 Use your Android phone as a high-quality PC webcam - over WiFi or USB.
 
 | Part | What it does | Where |
 |------|--------------|-------|
 | Mobile app | Streams the camera (simple UI: start/stop, flip, torch) | `app/` (Android, Kotlin) |
-| PC app | Full control + virtual webcam for Zoom/Meet/OBS | `CamConnect_Desktop.py` |
+| PC app | Full control + virtual webcam for Zoom/Meet/OBS | `Fonocam_Desktop.py` |
 
 ## PC app
 
@@ -13,7 +13,7 @@ Use your Android phone as a high-quality PC webcam - over WiFi or USB.
    ```
    pip install customtkinter opencv-python pyvirtualcam pillow numpy
    ```
-2. Double-click **`Run_CamConnect_Desktop.bat`**
+2. Double-click **`Run_Fonocam_Desktop.bat`**
 3. Your phone appears automatically in the device list - press **Connect**
 4. Press **Start Virtual Webcam** and pick "OBS Virtual Camera" in Zoom/Meet/Discord
 
@@ -36,4 +36,4 @@ Every push to `main` builds a signed release APK on GitHub Actions and publishes
 ## Roadmap
 - Phone mic → PC microphone
 - H.264 streaming (lower latency, real 1080p)
-- PyInstaller CamConnect.exe installer
+- PyInstaller Fonocam.exe installer

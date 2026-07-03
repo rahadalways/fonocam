@@ -78,7 +78,7 @@ import kotlinx.coroutines.withContext
 import java.net.NetworkInterface
 import java.util.Collections
 
-// ---------- palette (matches CamConnect Desktop) ----------
+// ---------- palette (matches Fonocam Desktop) ----------
 private val Bg = Color(0xFF14181D)
 private val Panel = Color(0xFF1C2229)
 private val Panel2 = Color(0xFF232B34)
@@ -89,7 +89,7 @@ private val Accent = Color(0xFFF2A93B)
 private val Live = Color(0xFFE5484D)
 private val Ok = Color(0xFF4CC38A)
 
-private const val PREFS_NAME = "camconnect_prefs"
+private const val PREFS_NAME = "fonocam_prefs"
 
 class MainActivity : ComponentActivity() {
 
@@ -100,7 +100,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MyApplicationTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = Bg) {
-                    CamConnectApp(prefs)
+                    FonocamApp(prefs)
                 }
             }
         }
@@ -108,7 +108,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun CamConnectApp(prefs: SharedPreferences) {
+fun FonocamApp(prefs: SharedPreferences) {
     val context = LocalContext.current
     val activity = context as? ComponentActivity
     val clipboard = LocalClipboardManager.current
@@ -314,7 +314,7 @@ fun CamConnectApp(prefs: SharedPreferences) {
                             svc.stopRecording()
                             Toast.makeText(
                                 context,
-                                "Saved to Movies/CamConnect", Toast.LENGTH_LONG
+                                "Saved to Movies/Fonocam", Toast.LENGTH_LONG
                             ).show()
                         } else {
                             val ok = svc.startRecording()
@@ -660,7 +660,7 @@ private fun SettingsDialog(
             }
 
             Text(
-                "Streaming runs as a background service with a notification, so you can leave the app or turn the screen off. The record button saves a backup video on the phone (Movies/CamConnect). Pinch the viewfinder to zoom.",
+                "Streaming runs as a background service with a notification, so you can leave the app or turn the screen off. The record button saves a backup video on the phone (Movies/Fonocam). Pinch the viewfinder to zoom.",
                 color = Color(0xFF5A6570), fontSize = 11.sp, lineHeight = 15.sp
             )
 

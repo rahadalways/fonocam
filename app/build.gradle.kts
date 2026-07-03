@@ -8,7 +8,7 @@ android {
   compileSdk { version = release(36) { minorApiLevel = 1 } }
 
   defaultConfig {
-    applicationId = "com.rahad.camconnect"
+    applicationId = "com.rahad.fonocam"
     minSdk = 24
     targetSdk = 36
     // CI stamps the real version (1.0.<build number>) so the in-app
@@ -21,9 +21,9 @@ android {
     create("release") {
       storeFile = file("${rootDir}/release-key.p12")
       storeType = "pkcs12"
-      storePassword = "camconnect"
-      keyAlias = "camconnect"
-      keyPassword = "camconnect"
+      storePassword = "fonocam"
+      keyAlias = "fonocam"
+      keyPassword = "fonocam"
     }
   }
 

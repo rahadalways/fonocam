@@ -1,7 +1,7 @@
 """
-CamConnect Desktop - use your phone as a real PC webcam.
+Fonocam Desktop - use your phone as a real PC webcam.
 
-Connects to the CamConnect Android app (MJPEG over HTTP), shows a live
+Connects to the Fonocam Android app (MJPEG over HTTP), shows a live
 preview, and outputs the video as a virtual webcam that Zoom / Meet /
 Discord / OBS can use.
 
@@ -28,7 +28,7 @@ import customtkinter as ctk
 from PIL import Image, ImageDraw
 from tkinter import messagebox
 
-SETTINGS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "camconnect_settings.json")
+SETTINGS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fonocam_settings.json")
 
 # ---------- palette (matches the design blueprint) ----------
 BG      = "#14181d"
@@ -65,15 +65,15 @@ def find_adb():
     return None
 
 
-class CamConnectApp(ctk.CTk):
+class FonocamApp(ctk.CTk):
     def __init__(self):
         super().__init__()
-        self.title("CamConnect Desktop")
+        self.title("Fonocam Desktop")
         self.geometry("1080x640")
         self.minsize(940, 560)
         try:
             self.iconbitmap(os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                         "camconnect.ico"))
+                                         "fonocam.ico"))
         except Exception:
             pass
         self.configure(fg_color=BG)
@@ -118,21 +118,22 @@ class CamConnectApp(ctk.CTk):
 
     # ------------------------------------------------ discovery
     def discovery_loop(self):
-        """Listen for CamConnect phones announcing themselves on the WiFi."""
+        """Listen for Fonocam phones announcing themselves on the WiFi."""
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             sock.bind(("", DISCOVERY_PORT))
             sock.settimeout(1.0)
         except Exception:
-            # another CamConnect instance or the firewall owns the port
+            # another Fonocam instance or the firewall owns the port
             self.discovery_failed = True
             return
         while True:
             try:
                 data, addr = sock.recvfrom(1024)
                 info = json.loads(data.decode("utf-8", "ignore"))
-                if info.get("app") == "camconnect":
+                # accept the old beacon name too (pre-rename phone apps)
+                if info.get("app") in ("fonocam", "camconnect"):
                     self.devices[addr[0]] = {
                         "name": str(info.get("name", "Phone"))[:40],
                         "port": int(info.get("port", 8080)),
@@ -210,7 +211,7 @@ class CamConnectApp(ctk.CTk):
         top.grid_propagate(False)
         ctk.CTkLabel(top, text=I_CAMERA, font=ctk.CTkFont(ICON_FONT, 18),
                      text_color=ACCENT).pack(side="left", padx=(18, 8), pady=10)
-        ctk.CTkLabel(top, text="CamConnect", font=ctk.CTkFont("Segoe UI", 19, "bold"),
+        ctk.CTkLabel(top, text="Fonocam", font=ctk.CTkFont("Segoe UI", 19, "bold"),
                      text_color=TEXT).pack(side="left", pady=10)
         self.status_chip = ctk.CTkLabel(top, text="●  Not connected", font=ctk.CTkFont("Consolas", 13),
                                         text_color=MUTED)
@@ -233,7 +234,7 @@ class CamConnectApp(ctk.CTk):
                                         text_color=MUTED, anchor="w")
         self.stream_info.grid(row=0, column=0, sticky="ew", padx=16, pady=(10, 0))
 
-        self.preview = ctk.CTkLabel(left, text="Open CamConnect on your phone and press Start -\nit will appear in the list on the right.",
+        self.preview = ctk.CTkLabel(left, text="Open Fonocam on your phone and press Start -\nit will appear in the list on the right.",
                                     font=ctk.CTkFont("Segoe UI", 15), text_color=MUTED,
                                     fg_color="#0b0e11", corner_radius=10)
         self.preview.grid(row=1, column=0, sticky="nsew", padx=12, pady=10)
@@ -407,7 +408,7 @@ class CamConnectApp(ctk.CTk):
         row = ctk.CTkFrame(g, fg_color="transparent"); row.pack(fill="x", pady=2)
         self.phone_rec_btn = self.tool_btn(row, "Record on Phone",
                                            lambda: self.phone_action("toggle-record"))
-        ctk.CTkLabel(g, text="Records a backup video on the phone itself\n(saved in the phone's Movies/CamConnect folder).",
+        ctk.CTkLabel(g, text="Records a backup video on the phone itself\n(saved in the phone's Movies/Fonocam folder).",
                      font=ctk.CTkFont("Segoe UI", 11), text_color=MUTED,
                      anchor="w", justify="left").pack(fill="x", padx=4, pady=(4, 0))
 
@@ -451,7 +452,7 @@ class CamConnectApp(ctk.CTk):
     def connect(self):
         ip = self.ip_entry.get().strip()
         if not ip:
-            messagebox.showwarning("CamConnect",
+            messagebox.showwarning("Fonocam",
                                    "Enter the phone's IP address first, or wait for your\n"
                                    "phone to appear in the detected-devices list.")
             return
@@ -569,7 +570,7 @@ class CamConnectApp(ctk.CTk):
     def on_stream_failed(self):
         self.connect_btn.configure(text="Connect (WiFi)", state="normal")
         self.status_chip.configure(text="●  Connection failed", text_color=LIVE)
-        messagebox.showerror("CamConnect",
+        messagebox.showerror("Fonocam",
                              "Could not connect to the phone.\n\n"
                              "Please check:\n"
                              "  1. The phone app is streaming (press Start on the phone)\n"
@@ -579,7 +580,7 @@ class CamConnectApp(ctk.CTk):
     def on_stream_failed_old_app(self):
         self.connect_btn.configure(text="Connect (WiFi)", state="normal")
         self.status_chip.configure(text="●  Update phone app", text_color=LIVE)
-        messagebox.showerror("CamConnect",
+        messagebox.showerror("Fonocam",
                              "The phone is running an old version of the app\n"
                              "(it still asks for a PIN).\n\n"
                              "Update it: open the app on the phone, then\n"
@@ -592,7 +593,7 @@ class CamConnectApp(ctk.CTk):
     def on_record_interrupted(self):
         self.rec_btn.configure(text=I_RECORD, fg_color=PANEL2,
                                text_color=LIVE, border_color=LINE)
-        messagebox.showinfo("CamConnect",
+        messagebox.showinfo("Fonocam",
                             "Recording was stopped because the video size changed\n"
                             "(rotation or camera switch). The file so far is saved:\n"
                             f"{self.record_path}")
@@ -647,7 +648,7 @@ class CamConnectApp(ctk.CTk):
         else:
             self.stream_info.configure(text="-", text_color=MUTED)
             if not self.connected:
-                self.preview.configure(image=None, text="Open CamConnect on your phone and press Start -\nit will appear in the list on the right.")
+                self.preview.configure(image=None, text="Open Fonocam on your phone and press Start -\nit will appear in the list on the right.")
                 self.preview._image_ref = None
         self.after(33, self.update_preview)
 
@@ -717,7 +718,7 @@ class CamConnectApp(ctk.CTk):
                                     fg_color=ACCENT, text_color="#14181d")
             return
         if not self.connected:
-            messagebox.showwarning("CamConnect", "Connect to the phone first.")
+            messagebox.showwarning("Fonocam", "Connect to the phone first.")
             return
         self.vcam_running = True
         self.vcam_btn.configure(text="Stop Virtual Webcam",
@@ -880,22 +881,22 @@ class CamConnectApp(ctk.CTk):
             self.rec_btn.configure(text=I_RECORD, fg_color=PANEL2,
                                    text_color=LIVE, border_color=LINE)
             if self.record_path:
-                messagebox.showinfo("CamConnect", f"Video saved:\n{self.record_path}")
+                messagebox.showinfo("Fonocam", f"Video saved:\n{self.record_path}")
             return
         with self.frame_lock:
             frame = self.frame
             if frame is None:
-                messagebox.showwarning("CamConnect", "Connect first, then record.")
+                messagebox.showwarning("Fonocam", "Connect first, then record.")
                 return
             h, w = frame.shape[:2]
-            folder = os.path.join(os.path.expanduser("~"), "Videos", "CamConnect")
+            folder = os.path.join(os.path.expanduser("~"), "Videos", "Fonocam")
             os.makedirs(folder, exist_ok=True)
-            self.record_path = os.path.join(folder, datetime.now().strftime("CamConnect_%Y%m%d_%H%M%S.mp4"))
+            self.record_path = os.path.join(folder, datetime.now().strftime("Fonocam_%Y%m%d_%H%M%S.mp4"))
             fourcc = cv2.VideoWriter_fourcc(*"mp4v")
             self.video_writer = cv2.VideoWriter(self.record_path, fourcc, max(self.fps, 10.0), (w, h))
             if not self.video_writer.isOpened():
                 self.video_writer = None
-                messagebox.showerror("CamConnect", "Could not create the video file.\n"
+                messagebox.showerror("Fonocam", "Could not create the video file.\n"
                                                    "Check that the Videos folder is writable.")
                 return
             self._rec_size = (w, h)
@@ -907,13 +908,13 @@ class CamConnectApp(ctk.CTk):
         with self.frame_lock:
             frame = None if self.frame is None else self.frame.copy()
         if frame is None:
-            messagebox.showwarning("CamConnect", "Connect first, then take a snapshot.")
+            messagebox.showwarning("Fonocam", "Connect first, then take a snapshot.")
             return
-        folder = os.path.join(os.path.expanduser("~"), "Pictures", "CamConnect")
+        folder = os.path.join(os.path.expanduser("~"), "Pictures", "Fonocam")
         os.makedirs(folder, exist_ok=True)
-        path = os.path.join(folder, datetime.now().strftime("CamConnect_%Y%m%d_%H%M%S.jpg"))
+        path = os.path.join(folder, datetime.now().strftime("Fonocam_%Y%m%d_%H%M%S.jpg"))
         cv2.imwrite(path, frame)
-        messagebox.showinfo("CamConnect", f"Snapshot saved:\n{path}")
+        messagebox.showinfo("Fonocam", f"Snapshot saved:\n{path}")
 
     # ------------------------------------------------ close
     def on_close(self):
@@ -928,5 +929,5 @@ class CamConnectApp(ctk.CTk):
 
 
 if __name__ == "__main__":
-    app = CamConnectApp()
+    app = FonocamApp()
     app.mainloop()
