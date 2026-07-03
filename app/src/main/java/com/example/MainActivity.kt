@@ -686,7 +686,7 @@ private fun SettingsDialog(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                if (c == "H.264") "H.264 (Beta)" else c,
+                                if (c == "H.264") "H.264 HD" else c,
                                 color = if (selected) Bg else TextC,
                                 fontSize = 13.sp, fontWeight = FontWeight.Bold
                             )

@@ -586,6 +586,22 @@ class FonocamApp(ctk.CTk):
         self.after(0, self.on_stream_started)
         threading.Thread(target=self.status_loop, daemon=True).start()
 
+        got = {"n": 0}
+        # Watchdog: if this phone's hardware encoder never produces a
+        # decodable frame, unblock the decoder so we can fall back to MJPEG
+        # instead of showing a black screen.
+        def watchdog():
+            t0 = time.time()
+            while (not self.stop_stream.is_set() and got["n"] == 0
+                   and time.time() - t0 < 6):
+                time.sleep(0.3)
+            if got["n"] == 0:
+                try:
+                    resp.close()
+                except Exception:
+                    pass
+        threading.Thread(target=watchdog, daemon=True).start()
+
         container = None
         try:
             container = av.open(resp, format="h264",
@@ -593,6 +609,7 @@ class FonocamApp(ctk.CTk):
             for frame in container.decode(video=0):
                 if self.stop_stream.is_set():
                     break
+                got["n"] += 1
                 self.push_frame(frame.to_ndarray(format="bgr24"))
         except Exception:
             pass
@@ -602,8 +619,15 @@ class FonocamApp(ctk.CTk):
             resp.close()
         except Exception:
             pass
-        if not self.stop_stream.is_set():
-            self.after(0, self.on_stream_dropped)
+
+        if self.stop_stream.is_set():
+            return True
+        if got["n"] == 0:
+            # H.264 didn't work on this device: fall back automatically
+            self.connected = False
+            self.mjpeg_loop()
+            return True
+        self.after(0, self.on_stream_dropped)
         return True
 
     def mjpeg_loop(self):
