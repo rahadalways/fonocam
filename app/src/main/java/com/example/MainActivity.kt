@@ -56,7 +56,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -135,7 +134,6 @@ fun CamConnectApp(prefs: SharedPreferences) {
 
     // viewfinder frame (decoded from the service's latest JPEG)
     var frameBitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
-    var frameRotation by remember { mutableStateOf(0f) }
 
     // battery saver
     var dimmed by remember { mutableStateOf(false) }
@@ -194,17 +192,24 @@ fun CamConnectApp(prefs: SharedPreferences) {
             val svc = StreamService.instance
             val bytes = svc?.server?.latestFrame
             if (bytes != null && bytes !== lastRef) {
+                val rotation = svc?.server?.streamRotation ?: 0
                 val bmp = withContext(Dispatchers.Default) {
                     try {
-                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                        var b = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                        if (b != null && rotation != 0) {
+                            val m = android.graphics.Matrix().apply { postRotate(rotation.toFloat()) }
+                            val rotated = android.graphics.Bitmap.createBitmap(
+                                b, 0, 0, b.width, b.height, m, true
+                            )
+                            if (rotated != b) b.recycle()
+                            b = rotated
+                        }
+                        b
                     } catch (e: Exception) {
                         null
                     }
                 }
-                if (bmp != null) {
-                    frameBitmap = bmp
-                    frameRotation = (svc?.server?.streamRotation ?: 0).toFloat()
-                }
+                if (bmp != null) frameBitmap = bmp
                 lastRef = bytes
             }
             delay(66)
@@ -253,10 +258,9 @@ fun CamConnectApp(prefs: SharedPreferences) {
             Image(
                 bitmap = frameBitmap!!.asImageBitmap(),
                 contentDescription = "Live camera",
-                contentScale = ContentScale.Fit,
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxSize()
-                    .graphicsLayer { rotationZ = frameRotation }
                     .pointerInput(Unit) {
                         detectTransformGestures { _, _, gestureZoom, _ ->
                             wake()
