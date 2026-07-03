@@ -87,7 +87,10 @@ def make_logo(size=26):
 
 
 def find_adb():
-    """Locate adb.exe in PATH or in the default Android SDK folder."""
+    """Locate adb.exe: bundled copy first, then PATH, then the Android SDK."""
+    bundled = resource_path(os.path.join("adb", "adb.exe"))
+    if os.path.isfile(bundled):
+        return bundled
     path = shutil.which("adb")
     if path:
         return path
@@ -116,6 +119,8 @@ class FonocamApp(ctk.CTk):
         self.frame_lock = threading.Lock()
         self.frame = None              # latest processed BGR frame
         self.fps = 0.0
+        self._fps_n = 0
+        self._fps_t = time.time()
         self.rotation = 0              # user-chosen extra rotation: 0 / 90 / 180 / 270
         self.auto_rotation = 0         # phone sensor rotation, from /status
         self.mirror = False
@@ -516,7 +521,92 @@ class FonocamApp(ctk.CTk):
         with self.frame_lock:
             self.frame = None
 
+    def push_frame(self, raw):
+        """Process one decoded BGR frame and hand it to preview/vcam/recorder."""
+        frame = self.process(raw)
+        with self.frame_lock:
+            self.frame = frame
+            if self.recording and self.video_writer is not None:
+                if (frame.shape[1], frame.shape[0]) == self._rec_size:
+                    self.video_writer.write(frame)
+                else:
+                    # rotation changed mid-recording: close the file
+                    # cleanly instead of writing corrupt frames
+                    self.video_writer.release()
+                    self.video_writer = None
+                    self.recording = False
+                    self.after(0, self.on_record_interrupted)
+        self._fps_n += 1
+        now = time.time()
+        if now - self._fps_t >= 1.0:
+            self.fps = self._fps_n / (now - self._fps_t)
+            self._fps_n = 0
+            self._fps_t = now
+
     def stream_loop(self):
+        # ask the phone which codec it is streaming
+        codec = "mjpeg"
+        try:
+            data = json.loads(urllib.request.urlopen(
+                f"{self.base_url()}/status", timeout=5).read().decode())
+            codec = str(data.get("codec", "mjpeg"))
+            self.auto_rotation = int(data.get("rotation", 0)) % 360
+        except urllib.error.HTTPError as e:
+            if e.code == 401:
+                self.after(0, self.on_stream_failed_old_app)
+                return
+        except Exception:
+            pass  # older app without /status; MJPEG will still work
+
+        self._fps_n = 0
+        self._fps_t = time.time()
+        if codec == "h264" and self.h264_loop():
+            return
+        self.mjpeg_loop()
+
+    def h264_loop(self):
+        """Decode the phone's hardware H.264 stream. Returns False when the
+        'av' package is unavailable so the caller can fall back to MJPEG."""
+        try:
+            import av
+        except ImportError:
+            self.after(0, lambda: messagebox.showwarning(
+                "Fonocam",
+                "The phone is set to H.264 but this PC build lacks the\n"
+                "'av' decoder package. Falling back to MJPEG.\n"
+                "(Running from source? pip install av)"))
+            return False
+        try:
+            resp = urllib.request.urlopen(f"{self.base_url()}/h264", timeout=6)
+        except Exception:
+            self.after(0, self.on_stream_failed)
+            return True
+
+        self.connected = True
+        self.after(0, self.on_stream_started)
+        threading.Thread(target=self.status_loop, daemon=True).start()
+
+        container = None
+        try:
+            container = av.open(resp, format="h264",
+                                options={"fflags": "nobuffer", "flags": "low_delay"})
+            for frame in container.decode(video=0):
+                if self.stop_stream.is_set():
+                    break
+                self.push_frame(frame.to_ndarray(format="bgr24"))
+        except Exception:
+            pass
+        try:
+            if container is not None:
+                container.close()
+            resp.close()
+        except Exception:
+            pass
+        if not self.stop_stream.is_set():
+            self.after(0, self.on_stream_dropped)
+        return True
+
+    def mjpeg_loop(self):
         url = f"{self.base_url()}/video"
         try:
             stream = urllib.request.urlopen(url, timeout=6)
@@ -539,8 +629,6 @@ class FonocamApp(ctk.CTk):
         # complete JPEG in the buffer - old frames are dropped, so the video
         # never builds up lag when the network hiccups.
         buf = b""
-        last = time.time()
-        n = 0
         try:
             while not self.stop_stream.is_set():
                 # read1 = whatever bytes are available right now (no waiting
@@ -563,25 +651,7 @@ class FonocamApp(ctk.CTk):
                 frame = cv2.imdecode(np.frombuffer(jpg, np.uint8), cv2.IMREAD_COLOR)
                 if frame is None:
                     continue
-                frame = self.process(frame)
-                with self.frame_lock:
-                    self.frame = frame
-                    if self.recording and self.video_writer is not None:
-                        if (frame.shape[1], frame.shape[0]) == self._rec_size:
-                            self.video_writer.write(frame)
-                        else:
-                            # rotation changed mid-recording: close the file
-                            # cleanly instead of writing corrupt frames
-                            self.video_writer.release()
-                            self.video_writer = None
-                            self.recording = False
-                            self.after(0, self.on_record_interrupted)
-                n += 1
-                now = time.time()
-                if now - last >= 1.0:
-                    self.fps = n / (now - last)
-                    n = 0
-                    last = now
+                self.push_frame(frame)
         except Exception:
             pass
         try:

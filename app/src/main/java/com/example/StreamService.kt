@@ -66,6 +66,9 @@ class StreamService : LifecycleService() {
     private val analysisExecutor = Executors.newSingleThreadExecutor()
     private var targetResolution = android.util.Size(1280, 720)
     private var recQualityPref = "1080p"
+    private var codecPref = "MJPEG"
+    @Volatile
+    private var encoder: H264Encoder? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -83,6 +86,7 @@ class StreamService : LifecycleService() {
         val prefs = getSharedPreferences("fonocam_prefs", Context.MODE_PRIVATE)
         val port = prefs.getInt("port", 8080)
         recQualityPref = prefs.getString("rec_quality", "1080p") ?: "1080p"
+        codecPref = prefs.getString("codec", "MJPEG") ?: "MJPEG"
         targetResolution = when (prefs.getString("resolution", "720p")) {
             "1080p" -> android.util.Size(1920, 1080)
             "480p" -> android.util.Size(854, 480)
@@ -105,6 +109,8 @@ class StreamService : LifecycleService() {
         srv.isSecurityEnabled = false
         srv.deviceName = "${Build.MANUFACTURER} ${Build.MODEL}".trim()
         srv.frameQuality = quality
+        srv.streamCodec = if (codecPref == "H.264") "h264" else "mjpeg"
+        srv.onH264ClientConnected = { encoder?.requestKeyFrame() }
         srv.start()
         server = srv
 
@@ -168,15 +174,36 @@ class StreamService : LifecycleService() {
                     .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
                     .setResolutionSelector(resolutionSelector)
                     .build()
+                val useH264 = codecPref == "H.264"
                 var lastTime = 0L
+                var lastJpegTime = 0L
                 analysis.setAnalyzer(analysisExecutor) { proxy ->
                     try {
                         val now = System.currentTimeMillis()
-                        if (now - lastTime >= 33) {
+                        server?.streamRotation = proxy.imageInfo.rotationDegrees
+                        if (useH264) {
+                            if (encoder == null) {
+                                // bitrate scales with resolution and quality
+                                val pixels = proxy.width * proxy.height
+                                val base = if (pixels > 1_500_000) 6_000_000 else 3_500_000
+                                val bitrate = (base * (quality / 70f)).toInt().coerceIn(1_000_000, 12_000_000)
+                                encoder = H264Encoder(proxy.width, proxy.height, bitrate, 30) { data, isConfig ->
+                                    if (isConfig) server?.h264Config = data
+                                    else server?.broadcastH264(data)
+                                }
+                            }
+                            encoder?.encode(proxy)
+                            // low-rate JPEG keeps the phone viewfinder alive
+                            if (now - lastJpegTime >= 500) {
+                                proxy.toJpegBytes(55, "None", applyRotation = false)?.let {
+                                    server?.latestFrame = it
+                                }
+                                lastJpegTime = now
+                            }
+                        } else if (now - lastTime >= 33) {
                             val jpeg = proxy.toJpegBytes(quality, "None", applyRotation = false)
                             if (jpeg != null) {
                                 server?.latestFrame = jpeg
-                                server?.streamRotation = proxy.imageInfo.rotationDegrees
                                 lastTime = now
                             }
                         }
@@ -235,6 +262,10 @@ class StreamService : LifecycleService() {
         flashOn = false
         server?.flashState = false
         stopRecording()
+        // encoder is tied to the old camera's resolution; rebuild it
+        encoder?.release()
+        encoder = null
+        server?.h264Config = null
         bindCamera()
     }
 
@@ -307,6 +338,8 @@ class StreamService : LifecycleService() {
         } catch (e: Exception) {
             e.printStackTrace()
         }
+        encoder?.release()
+        encoder = null
         server?.stop()
         server = null
         analysisExecutor.shutdown()

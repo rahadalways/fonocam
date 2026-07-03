@@ -64,10 +64,19 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install customtkinter opencv-python pyvirtualcam pillow "numpy<2" pyinstaller
+        run: pip install customtkinter opencv-python pyvirtualcam pillow "numpy<2" av pyinstaller
+
+      - name: Bundle adb (USB mode works out of the box)
+        run: |
+          curl -L -o pt.zip https://dl.google.com/android/repository/platform-tools-latest-windows.zip
+          Expand-Archive pt.zip -DestinationPath pt
+          mkdir adb
+          copy pt\platform-tools\adb.exe adb\
+          copy pt\platform-tools\AdbWinApi.dll adb\
+          copy pt\platform-tools\AdbWinUsbApi.dll adb\
 
       - name: Build Fonocam.exe
-        run: pyinstaller --noconfirm --onefile --windowed --name Fonocam --icon fonocam.ico --add-data "fonocam.ico;." --collect-all customtkinter Fonocam_Desktop.py
+        run: pyinstaller --noconfirm --onefile --windowed --name Fonocam --icon fonocam.ico --add-data "fonocam.ico;." --add-data "adb;adb" --collect-all customtkinter Fonocam_Desktop.py
 
       - name: Build installer (Inno Setup)
         run: '& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DAppVersion=1.0.${{ github.run_number }} installer.iss'

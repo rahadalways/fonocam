@@ -53,6 +53,58 @@ class WebcamHttpServer(
     @Volatile
     var startFailed = false
 
+    // ---- H.264 streaming ----
+    @Volatile
+    var streamCodec = "mjpeg" // "mjpeg" or "h264"
+
+    // SPS/PPS config; replayed to each new /h264 client so it can decode
+    @Volatile
+    var h264Config: ByteArray? = null
+
+    // called when a new /h264 client connects (service requests a keyframe)
+    @Volatile
+    var onH264ClientConnected: (() -> Unit)? = null
+
+    private val h264Queues =
+        java.util.Collections.synchronizedList(mutableListOf<java.util.concurrent.LinkedBlockingQueue<ByteArray>>())
+
+    fun broadcastH264(data: ByteArray) {
+        synchronized(h264Queues) {
+            for (q in h264Queues) {
+                if (!q.offer(data)) {
+                    // slow client: drop its backlog, keep the newest data
+                    q.clear()
+                    q.offer(data)
+                }
+            }
+        }
+    }
+
+    private fun serveH264(writer: OutputStream) {
+        writer.write(
+            ("HTTP/1.1 200 OK\r\n" +
+                "Content-Type: application/octet-stream\r\n" +
+                "Cache-Control: no-cache\r\n" +
+                "Connection: close\r\n\r\n").toByteArray()
+        )
+        h264Config?.let { writer.write(it) }
+        writer.flush()
+        val queue = java.util.concurrent.LinkedBlockingQueue<ByteArray>(120)
+        h264Queues.add(queue)
+        activeStreamsCount.incrementAndGet()
+        onH264ClientConnected?.invoke()
+        try {
+            while (isRunning.get()) {
+                val data = queue.poll(2, java.util.concurrent.TimeUnit.SECONDS) ?: continue
+                writer.write(data)
+                writer.flush()
+            }
+        } finally {
+            h264Queues.remove(queue)
+            activeStreamsCount.decrementAndGet()
+        }
+    }
+
     // shown in the PC app's auto-detected device list
     @Volatile
     var deviceName = "Android Phone"
@@ -186,6 +238,13 @@ class WebcamHttpServer(
                         serveUnauthorized(writer)
                     }
                 }
+                path == "/h264" -> {
+                    if (isAuthorized(params)) {
+                        serveH264(writer)
+                    } else {
+                        serveUnauthorized(writer)
+                    }
+                }
                 path.startsWith("/action/") -> {
                     if (isAuthorized(params)) {
                         val actionName = path.substringAfter("/action/")
@@ -204,7 +263,8 @@ class WebcamHttpServer(
                             "zoom": $zoomLevel,
                             "quality": $frameQuality,
                             "rotation": $streamRotation,
-                            "recording": $isRecordingState
+                            "recording": $isRecordingState,
+                            "codec": "$streamCodec"
                         }""".trimIndent())
                     } else {
                         serveUnauthorized(writer)

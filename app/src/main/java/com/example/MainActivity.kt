@@ -117,6 +117,7 @@ fun FonocamApp(prefs: SharedPreferences) {
     var serverPort by remember { mutableStateOf(prefs.getInt("port", 8080)) }
     var resolutionName by remember { mutableStateOf(prefs.getString("resolution", "720p") ?: "720p") }
     var recQuality by remember { mutableStateOf(prefs.getString("rec_quality", "1080p") ?: "1080p") }
+    var streamCodec by remember { mutableStateOf(prefs.getString("codec", "MJPEG") ?: "MJPEG") }
     var autoDimOn by remember { mutableStateOf(prefs.getBoolean("auto_dim", true)) }
 
     // ---- runtime state (mirrored from the service) ----
@@ -537,6 +538,11 @@ fun FonocamApp(prefs: SharedPreferences) {
                     recQuality = it
                     prefs.edit().putString("rec_quality", it).apply()
                 },
+                streamCodec = streamCodec,
+                onStreamCodecChange = {
+                    streamCodec = it
+                    prefs.edit().putString("codec", it).apply()
+                },
                 autoDimOn = autoDimOn,
                 onAutoDimChange = {
                     autoDimOn = it
@@ -557,6 +563,8 @@ private fun SettingsDialog(
     onPortChange: (Int) -> Unit,
     recQuality: String,
     onRecQualityChange: (String) -> Unit,
+    streamCodec: String,
+    onStreamCodecChange: (String) -> Unit,
     autoDimOn: Boolean,
     onAutoDimChange: (Boolean) -> Unit,
     onClose: () -> Unit
@@ -650,6 +658,35 @@ private fun SettingsDialog(
                         ) {
                             Text(
                                 r,
+                                color = if (selected) Bg else TextC,
+                                fontSize = 13.sp, fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            }
+
+            // stream codec
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                SettingLabel("STREAM CODEC")
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("MJPEG", "H.264").forEach { c ->
+                        val selected = c == streamCodec
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .clip(RoundedCornerShape(10.dp))
+                                .background(if (selected) Accent else Panel2)
+                                .border(
+                                    1.dp, if (selected) Accent else Line,
+                                    RoundedCornerShape(10.dp)
+                                )
+                                .clickable { onStreamCodecChange(c) }
+                                .padding(vertical = 10.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                if (c == "H.264") "H.264 (Beta)" else c,
                                 color = if (selected) Bg else TextC,
                                 fontSize = 13.sp, fontWeight = FontWeight.Bold
                             )
