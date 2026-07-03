@@ -1,46 +1,39 @@
-# 📸 CamConnect
+# CamConnect
 
-Tomar phone ke banao PC-r HD webcam — nijer banano DroidCam alternative.
+Use your Android phone as a high-quality PC webcam - over WiFi or USB.
 
-**Duita part:**
+| Part | What it does | Where |
+|------|--------------|-------|
+| Mobile app | Streams the camera (simple UI: start/stop, flip, torch) | `app/` (Android, Kotlin) |
+| PC app | Full control + virtual webcam for Zoom/Meet/OBS | `CamConnect_Desktop.py` |
 
-| Part | Ki | Kothay |
-|------|-----|--------|
-| 📱 Mobile app | Camera stream kore (simple UI — start/stop, flip, torch) | `app/` (Android, Kotlin) |
-| 🖥️ PC software | Sob control + Virtual Webcam (Zoom/Meet e camera hishebe dekhay) | `CamConnect_Desktop.py` |
+## PC app
 
----
-
-## 🖥️ PC software chalano
-
-1. Python 3.12 + packages lagbe (ei PC te already install kora ache):
+1. Install Python 3.12 and the packages:
    ```
    pip install customtkinter opencv-python pyvirtualcam pillow numpy
    ```
-2. **`Run_CamConnect_Desktop.bat`** double-click koro
-3. Phone er IP + PIN diye **Connect** chapo
-4. **Start Virtual Webcam** chapo → Zoom/Meet/Discord e "OBS Virtual Camera" select koro
+2. Double-click **`Run_CamConnect_Desktop.bat`**
+3. Your phone appears automatically in the device list - press **Connect**
+4. Press **Start Virtual Webcam** and pick "OBS Virtual Camera" in Zoom/Meet/Discord
 
-> Virtual webcam er jonno OBS Studio ekbar install kora lage (free, obsproject.com) — eta driver ta dey.
+> The virtual webcam needs the OBS Virtual Camera driver - install OBS Studio once (free, obsproject.com).
 
-### USB diye connect
-1. Phone e **Developer Options → USB debugging** on koro
-2. Cable lagao, PC app e **🔌 USB** chapo — bas
+### USB connection
+1. Enable **Developer Options → USB debugging** on the phone
+2. Plug in the cable, press **USB** in the PC app
 
-## 📱 Mobile app banano (APK)
+## Mobile app
 
-1. [Android Studio](https://developer.android.com/studio) install koro
-2. **Open** → ei folder ta select koro
-3. Phone lagiye **Run ▶** chapo (ba **Build → Build APK**)
+Download the latest APK from the [Releases page](https://github.com/rahadalways/camconnect/releases) and install it. After that the app updates itself: **Settings → Check for update**.
 
-App e ekta boro Start button — chaple screen e IP:Port ar PIN dekhabe, oitai PC te dibe.
+Features: background streaming (keeps running when you leave the app), battery saver, pinch zoom, on-phone backup recording, auto-discovery.
 
-## 🔒 Security
-- Prottek bar app khulle notun random 4-digit PIN hoy
-- PIN chhara keu stream dekhte parbe na
+## Building the APK
 
-## 📝 Baki plan (v2)
-- Phone er mic → PC te microphone
-- Auto-discovery (IP type kora lagbe na)
-- H.264 stream (aro kom latency)
-- PyInstaller diye CamConnect.exe installer
+Every push to `main` builds a signed release APK on GitHub Actions and publishes it as a release. No local Android SDK needed.
+
+## Roadmap
+- Phone mic → PC microphone
+- H.264 streaming (lower latency, real 1080p)
+- PyInstaller CamConnect.exe installer

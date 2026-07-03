@@ -17,6 +17,7 @@ import subprocess
 import sys
 import threading
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import datetime
@@ -43,7 +44,14 @@ OK      = "#4cc38a"
 
 VCAM_SIZES = {"480p": (640, 480), "720p": (1280, 720), "1080p": (1920, 1080)}
 DISCOVERY_PORT = 4748
-SEARCHING = "🔍  Searching for phones…"
+SEARCHING = "Searching for phones…"
+
+# Segoe MDL2 Assets glyphs (the crisp icon font Windows itself uses)
+ICON_FONT = "Segoe MDL2 Assets"
+I_CAMERA = "\uE722"   # camera
+I_RECORD = "\uE7C8"   # record dot
+I_STOP = "\uE71A"     # stop
+I_POPOUT = "\uE8A7"   # open in new window
 
 
 def find_adb():
@@ -63,6 +71,11 @@ class CamConnectApp(ctk.CTk):
         self.title("CamConnect Desktop")
         self.geometry("1080x640")
         self.minsize(940, 560)
+        try:
+            self.iconbitmap(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                         "camconnect.ico"))
+        except Exception:
+            pass
         self.configure(fg_color=BG)
         ctk.set_appearance_mode("dark")
 
@@ -95,6 +108,7 @@ class CamConnectApp(ctk.CTk):
         self.devices = {}            # ip -> {name, port, seen}
         self._device_map = {}        # menu label -> (ip, port)
         self._autofilled_ip = None
+        self.discovery_failed = False
 
         self.build_ui()
         threading.Thread(target=self.discovery_loop, daemon=True).start()
@@ -111,6 +125,8 @@ class CamConnectApp(ctk.CTk):
             sock.bind(("", DISCOVERY_PORT))
             sock.settimeout(1.0)
         except Exception:
+            # another CamConnect instance or the firewall owns the port
+            self.discovery_failed = True
             return
         while True:
             try:
@@ -129,7 +145,7 @@ class CamConnectApp(ctk.CTk):
         now = time.time()
         self.devices = {ip: d for ip, d in self.devices.items() if now - d["seen"] < 8}
         self._device_map = {
-            f"📱  {d['name']}  ·  {ip}": (ip, d["port"])
+            f"{d['name']}  ·  {ip}": (ip, d["port"])
             for ip, d in sorted(self.devices.items())
         }
         labels = list(self._device_map.keys())
@@ -149,8 +165,10 @@ class CamConnectApp(ctk.CTk):
                     self.port_entry.insert(0, str(first_port))
                 self._autofilled_ip = first_ip
         else:
-            self.device_menu.configure(values=[SEARCHING])
-            self.device_menu.set(SEARCHING)
+            label = ("Auto-detect off (already running elsewhere?)"
+                     if self.discovery_failed else SEARCHING)
+            self.device_menu.configure(values=[label])
+            self.device_menu.set(label)
         self.after(1000, self.refresh_devices)
 
     def on_device_selected(self, label):
@@ -174,7 +192,6 @@ class CamConnectApp(ctk.CTk):
         data = {
             "ip": self.ip_entry.get().strip(),
             "port": self.port_entry.get().strip(),
-            "pin": self.pin_entry.get().strip(),
         }
         try:
             with open(SETTINGS_FILE, "w") as f:
@@ -191,8 +208,10 @@ class CamConnectApp(ctk.CTk):
         top = ctk.CTkFrame(self, fg_color=PANEL, corner_radius=0, height=54, border_width=0)
         top.grid(row=0, column=0, columnspan=2, sticky="ew")
         top.grid_propagate(False)
-        ctk.CTkLabel(top, text="  📸  CamConnect", font=ctk.CTkFont("Segoe UI", 19, "bold"),
-                     text_color=TEXT).pack(side="left", padx=14, pady=10)
+        ctk.CTkLabel(top, text=I_CAMERA, font=ctk.CTkFont(ICON_FONT, 18),
+                     text_color=ACCENT).pack(side="left", padx=(18, 8), pady=10)
+        ctk.CTkLabel(top, text="CamConnect", font=ctk.CTkFont("Segoe UI", 19, "bold"),
+                     text_color=TEXT).pack(side="left", pady=10)
         self.status_chip = ctk.CTkLabel(top, text="●  Not connected", font=ctk.CTkFont("Consolas", 13),
                                         text_color=MUTED)
         self.status_chip.pack(side="right", padx=18)
@@ -223,33 +242,24 @@ class CamConnectApp(ctk.CTk):
         btnrow.grid(row=2, column=0, sticky="ew", padx=12, pady=(0, 12))
         btnrow.grid_columnconfigure(0, weight=1)
 
-        self.vcam_btn = ctk.CTkButton(btnrow, text="▶   Start Virtual Webcam",
+        self.vcam_btn = ctk.CTkButton(btnrow, text="Start Virtual Webcam",
                                       font=ctk.CTkFont("Segoe UI", 15, "bold"),
                                       fg_color=ACCENT, hover_color=ACCENT_D, text_color="#14181d",
                                       height=44, corner_radius=10, command=self.toggle_vcam)
         self.vcam_btn.grid(row=0, column=0, sticky="ew", padx=(0, 8))
 
         # capture controls live right under the video, where they belong
-        self.rec_btn = ctk.CTkButton(btnrow, text="⏺ Rec", width=84, height=44, corner_radius=10,
-                                     font=ctk.CTkFont("Segoe UI", 13, "bold"),
-                                     fg_color=PANEL2, hover_color=LINE, border_width=1,
-                                     border_color=LINE, text_color=TEXT,
-                                     command=self.toggle_record)
-        self.rec_btn.grid(row=0, column=1, padx=(0, 8))
+        def icon_btn(glyph, col, cmd, color=TEXT):
+            b = ctk.CTkButton(btnrow, text=glyph, width=54, height=44, corner_radius=10,
+                              font=ctk.CTkFont(ICON_FONT, 16),
+                              fg_color=PANEL2, hover_color=LINE, border_width=1,
+                              border_color=LINE, text_color=color, command=cmd)
+            b.grid(row=0, column=col, padx=(0, 8) if col < 3 else 0)
+            return b
 
-        self.snap_btn = ctk.CTkButton(btnrow, text="📷", width=54, height=44, corner_radius=10,
-                                      font=ctk.CTkFont("Segoe UI", 16),
-                                      fg_color=PANEL2, hover_color=LINE, border_width=1,
-                                      border_color=LINE, text_color=TEXT,
-                                      command=self.snapshot)
-        self.snap_btn.grid(row=0, column=2, padx=(0, 8))
-
-        self.pip_btn = ctk.CTkButton(btnrow, text="⧉", width=54, height=44, corner_radius=10,
-                                     font=ctk.CTkFont("Segoe UI", 18),
-                                     fg_color=PANEL2, hover_color=LINE, border_width=1,
-                                     border_color=LINE, text_color=TEXT,
-                                     command=self.toggle_pip)
-        self.pip_btn.grid(row=0, column=3)
+        self.rec_btn = icon_btn(I_RECORD, 1, self.toggle_record, color=LIVE)
+        self.snap_btn = icon_btn(I_CAMERA, 2, self.snapshot)
+        self.pip_btn = icon_btn(I_POPOUT, 3, self.toggle_pip)
 
         # ---- right: controls, organised in tabs (no scrolling needed) ----
         right = ctk.CTkFrame(main, fg_color=PANEL, corner_radius=14,
@@ -318,15 +328,9 @@ class CamConnectApp(ctk.CTk):
                                        fg_color=PANEL, border_color=LINE, height=34)
         self.port_entry.pack(side="left")
 
-        row2 = ctk.CTkFrame(g, fg_color="transparent"); row2.pack(fill="x", pady=(6, 2))
-        self.pin_entry = ctk.CTkEntry(row2, placeholder_text="PIN (shown on the phone)",
-                                      fg_color=PANEL, border_color=LINE, height=34)
-        self.pin_entry.pack(side="left", fill="x", expand=True)
-
         if self.settings.get("ip"):   self.ip_entry.insert(0, self.settings["ip"])
         if self.settings.get("port"): self.port_entry.insert(0, str(self.settings["port"]))
         else:                         self.port_entry.insert(0, "8080")
-        if self.settings.get("pin"):  self.pin_entry.insert(0, str(self.settings["pin"]))
 
         row3 = ctk.CTkFrame(g, fg_color="transparent"); row3.pack(fill="x", pady=(8, 2))
         self.connect_btn = ctk.CTkButton(row3, text="Connect (WiFi)", height=36, corner_radius=8,
@@ -334,7 +338,7 @@ class CamConnectApp(ctk.CTk):
                                          font=ctk.CTkFont("Segoe UI", 13, "bold"),
                                          command=self.toggle_connect)
         self.connect_btn.pack(side="left", fill="x", expand=True, padx=(0, 6))
-        self.usb_btn = ctk.CTkButton(row3, text="🔌 USB", width=90, height=36, corner_radius=8,
+        self.usb_btn = ctk.CTkButton(row3, text="USB", width=90, height=36, corner_radius=8,
                                      fg_color=PANEL, hover_color=LINE, border_width=1,
                                      border_color=LINE, text_color=TEXT,
                                      command=self.connect_usb)
@@ -374,20 +378,20 @@ class CamConnectApp(ctk.CTk):
 
         g = group(tab("Video"), "Transform")
         row = ctk.CTkFrame(g, fg_color="transparent"); row.pack(fill="x", pady=2)
-        self.rot_btn = self.tool_btn(row, "↻ Rotate 0°", self.cycle_rotation)
-        self.mirror_btn = self.tool_btn(row, "⇋ Mirror", self.toggle_mirror)
-        self.flip_btn = self.tool_btn(row, "⇅ Flip", self.toggle_flip)
+        self.rot_btn = self.tool_btn(row, "Rotate 0°", self.cycle_rotation)
+        self.mirror_btn = self.tool_btn(row, "Mirror", self.toggle_mirror)
+        self.flip_btn = self.tool_btn(row, "Flip", self.toggle_flip)
 
         g = group(tab("Video"), "Image")
-        self.bright_slider = self.slider(g, "☀  Brightness", -100, 100, 0, self.on_bright)
-        self.contrast_slider = self.slider(g, "◐  Contrast", 40, 220, 100, self.on_contrast)
+        self.bright_slider = self.slider(g, "Brightness", -100, 100, 0, self.on_bright)
+        self.contrast_slider = self.slider(g, "Contrast", 40, 220, 100, self.on_contrast)
 
         # ============ TAB: Phone ============
         g = group(tab("Phone"), "Phone Camera")
         row = ctk.CTkFrame(g, fg_color="transparent"); row.pack(fill="x", pady=2)
-        self.torch_btn = self.tool_btn(row, "🔦 Torch", self.toggle_torch)
-        self.tool_btn(row, "🔄 Switch Cam", lambda: self.phone_action("switch-camera"))
-        self.zoom_slider = self.slider(g, "🔍  Zoom", 10, 80, 10, self.on_zoom)
+        self.torch_btn = self.tool_btn(row, "Torch", self.toggle_torch)
+        self.tool_btn(row, "Switch Camera", lambda: self.phone_action("switch-camera"))
+        self.zoom_slider = self.slider(g, "Zoom", 10, 80, 10, self.on_zoom)
         row = ctk.CTkFrame(g, fg_color="transparent"); row.pack(fill="x", pady=(4, 2))
         ctk.CTkLabel(row, text="Quality", font=ctk.CTkFont("Segoe UI", 12),
                      text_color=MUTED, width=60, anchor="w").pack(side="left", padx=(4, 6))
@@ -401,7 +405,7 @@ class CamConnectApp(ctk.CTk):
 
         g = group(tab("Phone"), "Phone Recording")
         row = ctk.CTkFrame(g, fg_color="transparent"); row.pack(fill="x", pady=2)
-        self.phone_rec_btn = self.tool_btn(row, "⏺ Record on Phone",
+        self.phone_rec_btn = self.tool_btn(row, "Record on Phone",
                                            lambda: self.phone_action("toggle-record"))
         ctk.CTkLabel(g, text="Records a backup video on the phone itself\n(saved in the phone's Movies/CamConnect folder).",
                      font=ctk.CTkFont("Segoe UI", 11), text_color=MUTED,
@@ -438,10 +442,6 @@ class CamConnectApp(ctk.CTk):
         port = self.port_entry.get().strip() or "8080"
         return f"http://{ip}:{port}"
 
-    def auth_query(self):
-        pin = self.pin_entry.get().strip()
-        return f"pin={urllib.parse.quote(pin)}" if pin else ""
-
     def toggle_connect(self):
         if self.connected:
             self.disconnect()
@@ -475,11 +475,15 @@ class CamConnectApp(ctk.CTk):
 
     def stream_loop(self):
         url = f"{self.base_url()}/video"
-        q = self.auth_query()
-        if q:
-            url += "?" + q
         try:
             stream = urllib.request.urlopen(url, timeout=6)
+        except urllib.error.HTTPError as e:
+            if e.code == 401:
+                # old phone app with the PIN system still enabled
+                self.after(0, self.on_stream_failed_old_app)
+            else:
+                self.after(0, self.on_stream_failed)
+            return
         except Exception:
             self.after(0, self.on_stream_failed)
             return
@@ -520,7 +524,15 @@ class CamConnectApp(ctk.CTk):
                 with self.frame_lock:
                     self.frame = frame
                     if self.recording and self.video_writer is not None:
-                        self.video_writer.write(frame)
+                        if (frame.shape[1], frame.shape[0]) == self._rec_size:
+                            self.video_writer.write(frame)
+                        else:
+                            # rotation changed mid-recording: close the file
+                            # cleanly instead of writing corrupt frames
+                            self.video_writer.release()
+                            self.video_writer = None
+                            self.recording = False
+                            self.after(0, self.on_record_interrupted)
                 n += 1
                 now = time.time()
                 if now - last >= 1.0:
@@ -542,9 +554,6 @@ class CamConnectApp(ctk.CTk):
         while self.connected and not self.stop_stream.is_set():
             try:
                 url = f"{self.base_url()}/status"
-                q = self.auth_query()
-                if q:
-                    url += "?" + q
                 data = json.loads(urllib.request.urlopen(url, timeout=4).read().decode())
                 self.auto_rotation = int(data.get("rotation", 0)) % 360
                 self.phone_recording = bool(data.get("recording", False))
@@ -563,13 +572,30 @@ class CamConnectApp(ctk.CTk):
         messagebox.showerror("CamConnect",
                              "Could not connect to the phone.\n\n"
                              "Please check:\n"
-                             "  1. The phone app is streaming (press ▶ Start on the phone)\n"
+                             "  1. The phone app is streaming (press Start on the phone)\n"
                              "  2. Phone and PC are on the same WiFi (or the USB cable is plugged in)\n"
-                             "  3. IP, port and PIN are correct")
+                             "  3. IP and port are correct")
+
+    def on_stream_failed_old_app(self):
+        self.connect_btn.configure(text="Connect (WiFi)", state="normal")
+        self.status_chip.configure(text="●  Update phone app", text_color=LIVE)
+        messagebox.showerror("CamConnect",
+                             "The phone is running an old version of the app\n"
+                             "(it still asks for a PIN).\n\n"
+                             "Update it: open the app on the phone, then\n"
+                             "Settings > Check for update > Download.")
 
     def on_stream_dropped(self):
         self.disconnect()
         self.status_chip.configure(text="●  Stream dropped", text_color=LIVE)
+
+    def on_record_interrupted(self):
+        self.rec_btn.configure(text=I_RECORD, fg_color=PANEL2,
+                               text_color=LIVE, border_color=LINE)
+        messagebox.showinfo("CamConnect",
+                            "Recording was stopped because the video size changed\n"
+                            "(rotation or camera switch). The file so far is saved:\n"
+                            f"{self.record_path}")
 
     # ------------------------------------------------ frame processing
     def process(self, frame):
@@ -617,7 +643,7 @@ class CamConnectApp(ctk.CTk):
                 self._phone_rec_shown = self.phone_recording
                 self.set_active(self.phone_rec_btn, self.phone_recording)
                 self.phone_rec_btn.configure(
-                    text="⏹ Stop Phone Rec" if self.phone_recording else "⏺ Record on Phone")
+                    text="Stop Phone Recording" if self.phone_recording else "Record on Phone")
         else:
             self.stream_info.configure(text="-", text_color=MUTED)
             if not self.connected:
@@ -687,14 +713,14 @@ class CamConnectApp(ctk.CTk):
     def toggle_vcam(self):
         if self.vcam_running:
             self.vcam_running = False
-            self.vcam_btn.configure(text="▶   Start Virtual Webcam",
+            self.vcam_btn.configure(text="Start Virtual Webcam",
                                     fg_color=ACCENT, text_color="#14181d")
             return
         if not self.connected:
             messagebox.showwarning("CamConnect", "Connect to the phone first.")
             return
         self.vcam_running = True
-        self.vcam_btn.configure(text="■   Stop Virtual Webcam",
+        self.vcam_btn.configure(text="Stop Virtual Webcam",
                                 fg_color=LIVE, text_color="#ffffff")
         self.vcam_thread = threading.Thread(target=self.vcam_loop, daemon=True)
         self.vcam_thread.start()
@@ -708,7 +734,7 @@ class CamConnectApp(ctk.CTk):
         except Exception as e:
             self.vcam_running = False
             self.after(0, lambda: (
-                self.vcam_btn.configure(text="▶   Start Virtual Webcam",
+                self.vcam_btn.configure(text="Start Virtual Webcam",
                                         fg_color=ACCENT, text_color="#14181d"),
                 messagebox.showerror(
                     "Virtual Webcam",
@@ -719,7 +745,8 @@ class CamConnectApp(ctk.CTk):
                     f"Error: {e}")))
             return
         canvas = np.zeros((h, w, 3), dtype=np.uint8)
-        with cam:
+        try:
+          with cam:
             while self.vcam_running and self.connected:
                 with self.frame_lock:
                     frame = None if self.frame is None else self.frame.copy()
@@ -744,6 +771,17 @@ class CamConnectApp(ctk.CTk):
                         out = canvas
                     cam.send(cv2.cvtColor(out, cv2.COLOR_BGR2RGB))
                 cam.sleep_until_next_frame()
+        except Exception:
+            # driver hiccup or camera taken by another app: recover cleanly
+            if self.vcam_running:
+                self.vcam_running = False
+                self.after(0, lambda: (
+                    self.vcam_btn.configure(text="Start Virtual Webcam",
+                                            fg_color=ACCENT, text_color="#14181d"),
+                    messagebox.showwarning(
+                        "Virtual Webcam",
+                        "The virtual webcam stopped unexpectedly\n"
+                        "(another app may have taken it). Start it again.")))
 
     # ------------------------------------------------ usb connect
     def connect_usb(self):
@@ -788,7 +826,7 @@ class CamConnectApp(ctk.CTk):
     # ------------------------------------------------ transform / image handlers
     def cycle_rotation(self):
         self.rotation = (self.rotation + 90) % 360
-        self.rot_btn.configure(text=f"↻ Rotate {self.rotation}°")
+        self.rot_btn.configure(text=f"Rotate {self.rotation}°")
         self.set_active(self.rot_btn, self.rotation != 0)
 
     def toggle_mirror(self):
@@ -813,14 +851,8 @@ class CamConnectApp(ctk.CTk):
         def run():
             try:
                 url = f"{self.base_url()}/action/{name}"
-                params = []
                 if value is not None:
-                    params.append("value=" + urllib.parse.quote(str(value)))
-                q = self.auth_query()
-                if q:
-                    params.append(q)
-                if params:
-                    url += "?" + "&".join(params)
+                    url += "?value=" + urllib.parse.quote(str(value))
                 urllib.request.urlopen(url, timeout=5).read()
             except Exception:
                 pass
@@ -845,8 +877,8 @@ class CamConnectApp(ctk.CTk):
                 if self.video_writer is not None:
                     self.video_writer.release()
                     self.video_writer = None
-            self.rec_btn.configure(text="⏺ Rec", fg_color=PANEL2,
-                                   text_color=TEXT, border_color=LINE)
+            self.rec_btn.configure(text=I_RECORD, fg_color=PANEL2,
+                                   text_color=LIVE, border_color=LINE)
             if self.record_path:
                 messagebox.showinfo("CamConnect", f"Video saved:\n{self.record_path}")
             return
@@ -861,8 +893,14 @@ class CamConnectApp(ctk.CTk):
             self.record_path = os.path.join(folder, datetime.now().strftime("CamConnect_%Y%m%d_%H%M%S.mp4"))
             fourcc = cv2.VideoWriter_fourcc(*"mp4v")
             self.video_writer = cv2.VideoWriter(self.record_path, fourcc, max(self.fps, 10.0), (w, h))
+            if not self.video_writer.isOpened():
+                self.video_writer = None
+                messagebox.showerror("CamConnect", "Could not create the video file.\n"
+                                                   "Check that the Videos folder is writable.")
+                return
+            self._rec_size = (w, h)
         self.recording = True
-        self.rec_btn.configure(text="⏹ Stop", fg_color=LIVE,
+        self.rec_btn.configure(text=I_STOP, fg_color=LIVE,
                                text_color="#ffffff", border_color=LIVE)
 
     def snapshot(self):

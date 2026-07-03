@@ -115,12 +115,6 @@ fun CamConnectApp(prefs: SharedPreferences) {
 
     // ---- persisted settings ----
     var serverPort by remember { mutableStateOf(prefs.getInt("port", 8080)) }
-    var serverPin by remember {
-        mutableStateOf(prefs.getString("pin", null) ?: (1000..9999).random().toString().also {
-            prefs.edit().putString("pin", it).apply()
-        })
-    }
-    var securityOn by remember { mutableStateOf(prefs.getBoolean("security", true)) }
     var resolutionName by remember { mutableStateOf(prefs.getString("resolution", "720p") ?: "720p") }
     var autoDimOn by remember { mutableStateOf(prefs.getBoolean("auto_dim", true)) }
 
@@ -182,6 +176,14 @@ fun CamConnectApp(prefs: SharedPreferences) {
             isRecordingPhone = svc?.isRecording ?: false
             zoomRatio = svc?.zoomRatio ?: 1.0f
             pcConnected = svc?.server?.hasActiveClients() == true
+            if (svc?.server?.startFailed == true) {
+                context.stopService(Intent(context, StreamService::class.java))
+                Toast.makeText(
+                    context,
+                    "Port $serverPort is already in use. Change the port in Settings.",
+                    Toast.LENGTH_LONG
+                ).show()
+            }
             delay(300)
         }
     }
@@ -432,13 +434,6 @@ fun CamConnectApp(prefs: SharedPreferences) {
                     color = TextC, fontSize = 22.sp,
                     fontWeight = FontWeight.Bold, fontFamily = MonoFont
                 )
-                Spacer(Modifier.height(2.dp))
-                Text(
-                    text = if (securityOn) "PIN  $serverPin" else "PIN OFF",
-                    color = if (securityOn) Accent else Muted, fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold, fontFamily = MonoFont,
-                    letterSpacing = 2.sp
-                )
             }
 
             Spacer(Modifier.height(18.dp))
@@ -536,18 +531,6 @@ fun CamConnectApp(prefs: SharedPreferences) {
                     serverPort = it
                     prefs.edit().putInt("port", it).apply()
                 },
-                pin = serverPin,
-                onPinChange = {
-                    serverPin = it
-                    prefs.edit().putString("pin", it).apply()
-                    StreamService.instance?.server?.serverPin = it
-                },
-                securityOn = securityOn,
-                onSecurityChange = {
-                    securityOn = it
-                    prefs.edit().putBoolean("security", it).apply()
-                    StreamService.instance?.server?.isSecurityEnabled = it
-                },
                 autoDimOn = autoDimOn,
                 onAutoDimChange = {
                     autoDimOn = it
@@ -566,16 +549,11 @@ private fun SettingsDialog(
     onResolutionChange: (String) -> Unit,
     port: Int,
     onPortChange: (Int) -> Unit,
-    pin: String,
-    onPinChange: (String) -> Unit,
-    securityOn: Boolean,
-    onSecurityChange: (Boolean) -> Unit,
     autoDimOn: Boolean,
     onAutoDimChange: (Boolean) -> Unit,
     onClose: () -> Unit
 ) {
     var portText by remember { mutableStateOf(port.toString()) }
-    var pinText by remember { mutableStateOf(pin) }
 
     Dialog(onDismissRequest = onClose) {
         Column(
@@ -657,63 +635,6 @@ private fun SettingsDialog(
                     colors = settingsFieldColors(),
                     modifier = Modifier.fillMaxWidth()
                 )
-            }
-
-            // security + pin
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    SettingLabel("PIN SECURITY")
-                    Spacer(Modifier.weight(1f))
-                    Switch(
-                        checked = securityOn,
-                        onCheckedChange = onSecurityChange,
-                        colors = SwitchDefaults.colors(
-                            checkedTrackColor = Accent,
-                            checkedThumbColor = Bg,
-                            uncheckedTrackColor = Panel2,
-                            uncheckedThumbColor = Muted,
-                            uncheckedBorderColor = Line
-                        )
-                    )
-                }
-                if (securityOn) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        OutlinedTextField(
-                            value = pinText,
-                            onValueChange = { text ->
-                                pinText = text.filter { it.isDigit() }.take(8)
-                                if (pinText.length >= 4) onPinChange(pinText)
-                            },
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            colors = settingsFieldColors(),
-                            modifier = Modifier.weight(1f)
-                        )
-                        // new random pin
-                        Box(
-                            modifier = Modifier
-                                .size(48.dp)
-                                .clip(RoundedCornerShape(10.dp))
-                                .background(Panel2)
-                                .border(1.dp, Line, RoundedCornerShape(10.dp))
-                                .clickable {
-                                    val newPin = (1000..9999).random().toString()
-                                    pinText = newPin
-                                    onPinChange(newPin)
-                                },
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(Icons.Default.Refresh, "New PIN", tint = Accent, modifier = Modifier.size(20.dp))
-                        }
-                    }
-                    Text(
-                        "Only devices with this PIN can view the stream.",
-                        color = Muted, fontSize = 11.sp
-                    )
-                }
             }
 
             // battery saver

@@ -41,11 +41,17 @@ class WebcamHttpServer(
     @Volatile
     var streamRotation = 0
 
+    // PIN auth is kept in the protocol for compatibility but disabled by
+    // default: CamConnect is meant for your own home network
     @Volatile
-    var isSecurityEnabled = true
+    var isSecurityEnabled = false
 
     @Volatile
     var serverPin = "1234"
+
+    // true when the port could not be bound (e.g. already in use)
+    @Volatile
+    var startFailed = false
 
     // shown in the PC app's auto-detected device list
     @Volatile
@@ -78,6 +84,7 @@ class WebcamHttpServer(
                     executor.execute { handleClient(socket) }
                 }
             } catch (e: Exception) {
+                if (isRunning.get() && serverSocket == null) startFailed = true
                 Log.e("WebcamHttpServer", "Error in server socket loop", e)
             }
         }

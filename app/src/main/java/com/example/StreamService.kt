@@ -81,8 +81,6 @@ class StreamService : LifecycleService() {
 
         val prefs = getSharedPreferences("camconnect_prefs", Context.MODE_PRIVATE)
         val port = prefs.getInt("port", 8080)
-        val pin = prefs.getString("pin", "1234") ?: "1234"
-        val security = prefs.getBoolean("security", true)
         targetResolution = when (prefs.getString("resolution", "720p")) {
             "1080p" -> android.util.Size(1920, 1080)
             "480p" -> android.util.Size(854, 480)
@@ -102,8 +100,7 @@ class StreamService : LifecycleService() {
                 }
             }
         }
-        srv.isSecurityEnabled = security
-        srv.serverPin = pin
+        srv.isSecurityEnabled = false
         srv.deviceName = "${Build.MANUFACTURER} ${Build.MODEL}".trim()
         srv.frameQuality = quality
         srv.start()
@@ -209,6 +206,10 @@ class StreamService : LifecycleService() {
                 server?.currentCamera = if (backCamera) "back" else "front"
             } catch (e: Exception) {
                 e.printStackTrace()
+                android.widget.Toast.makeText(
+                    this, "Camera could not start. Close other camera apps and try again.",
+                    android.widget.Toast.LENGTH_LONG
+                ).show()
             }
         }, ContextCompat.getMainExecutor(this))
     }
