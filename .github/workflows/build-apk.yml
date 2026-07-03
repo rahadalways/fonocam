@@ -69,21 +69,28 @@ jobs:
       - name: Build Fonocam.exe
         run: pyinstaller --noconfirm --onefile --windowed --name Fonocam --icon fonocam.ico --add-data "fonocam.ico;." --collect-all customtkinter Fonocam_Desktop.py
 
-      - name: Rename EXE
+      - name: Build installer (Inno Setup)
+        run: '& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DAppVersion=1.0.${{ github.run_number }} installer.iss'
+
+      - name: Rename outputs
         run: |
-          copy dist\Fonocam.exe Fonocam-Desktop-v1.0.${{ github.run_number }}.exe
-          copy dist\Fonocam.exe Fonocam-Desktop.exe
+          copy dist\Fonocam.exe Fonocam-Portable-v1.0.${{ github.run_number }}.exe
+          copy dist\Fonocam-Setup.exe Fonocam-Setup-v1.0.${{ github.run_number }}.exe
+          copy dist\Fonocam-Setup.exe Fonocam-Setup.exe
 
       - name: Upload EXE artifact
         uses: actions/upload-artifact@v4
         with:
           name: Fonocam-Desktop-EXE
-          path: Fonocam-Desktop-v*.exe
+          path: |
+            Fonocam-Setup-v*.exe
+            Fonocam-Portable-v*.exe
 
       - name: Attach EXE to release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.${{ github.run_number }}
           files: |
-            Fonocam-Desktop-v*.exe
-            Fonocam-Desktop.exe
+            Fonocam-Setup-v*.exe
+            Fonocam-Setup.exe
+            Fonocam-Portable-v*.exe

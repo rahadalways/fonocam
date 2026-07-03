@@ -185,10 +185,12 @@ class StreamService : LifecycleService() {
                     }
                 }
 
+                // backup recording targets full-HD (1080p) like the stock
+                // camera app; falls back to the best the device supports
                 val recorder = Recorder.Builder()
                     .setQualitySelector(
                         QualitySelector.from(
-                            Quality.HD, FallbackStrategy.higherQualityOrLowerThan(Quality.HD)
+                            Quality.FHD, FallbackStrategy.higherQualityOrLowerThan(Quality.FHD)
                         )
                     )
                     .build()
