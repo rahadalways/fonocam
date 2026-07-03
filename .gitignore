@@ -22,3 +22,7 @@ node_modules/
 pc-server/key.pem
 pc-server/cert.pem
 fonocam_settings.json
+
+build/
+dist/
+*.spec

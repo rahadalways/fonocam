@@ -1,4 +1,4 @@
-name: Build APK
+name: Build APK and EXE
 
 on:
   push:
@@ -12,7 +12,7 @@ env:
   VERSION_NAME: 1.0.${{ github.run_number }}
 
 jobs:
-  build:
+  build-apk:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -47,3 +47,35 @@ jobs:
           tag_name: v1.0.${{ github.run_number }}
           name: Fonocam v1.0.${{ github.run_number }}
           files: Fonocam-v*.apk
+
+  build-exe:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install customtkinter opencv-python pyvirtualcam pillow "numpy<2" pyinstaller
+
+      - name: Build Fonocam.exe
+        run: pyinstaller --noconfirm --onefile --windowed --name Fonocam --icon fonocam.ico --add-data "fonocam.ico;." --collect-all customtkinter Fonocam_Desktop.py
+
+      - name: Rename EXE
+        run: copy dist\Fonocam.exe Fonocam-Desktop-v1.0.${{ github.run_number }}.exe
+
+      - name: Upload EXE artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Fonocam-Desktop-EXE
+          path: Fonocam-Desktop-v*.exe
+
+      - name: Attach EXE to release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          files: Fonocam-Desktop-v*.exe

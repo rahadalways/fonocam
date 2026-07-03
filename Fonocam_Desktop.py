@@ -28,7 +28,19 @@ import customtkinter as ctk
 from PIL import Image, ImageDraw
 from tkinter import messagebox
 
-SETTINGS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fonocam_settings.json")
+def resource_path(name):
+    """Find bundled files both in dev mode and inside the packaged exe."""
+    base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base, name)
+
+
+# settings live in %APPDATA%\Fonocam so the exe can run from anywhere
+_cfg_dir = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")), "Fonocam")
+try:
+    os.makedirs(_cfg_dir, exist_ok=True)
+except Exception:
+    _cfg_dir = os.path.dirname(os.path.abspath(__file__))
+SETTINGS_FILE = os.path.join(_cfg_dir, "settings.json")
 
 # ---------- palette (matches the design blueprint) ----------
 BG      = "#14181d"
@@ -54,6 +66,25 @@ I_STOP = "\uE71A"     # stop
 I_POPOUT = "\uE8A7"   # open in new window
 
 
+def make_logo(size=26):
+    """Draw the Fonocam lens logo (same design as the Android app icon)."""
+    ss = 4
+    px = size * ss
+    im = Image.new("RGBA", (px, px), (0, 0, 0, 0))
+    d = ImageDraw.Draw(im)
+    s = px / 108.0
+
+    def c(cx, cy, r, col):
+        d.ellipse(((cx - r) * s, (cy - r) * s, (cx + r) * s, (cy + r) * s), fill=col)
+
+    c(54, 54, 30, (242, 169, 59, 255))   # amber ring
+    c(54, 54, 21, (28, 34, 41, 255))     # lens body
+    c(54, 54, 14, (35, 43, 52, 255))     # glass
+    c(62, 44, 5, (242, 169, 59, 255))    # glint
+    c(82, 78, 6, (229, 72, 77, 255))     # live dot
+    return im.resize((size, size), Image.LANCZOS)
+
+
 def find_adb():
     """Locate adb.exe in PATH or in the default Android SDK folder."""
     path = shutil.which("adb")
@@ -72,8 +103,7 @@ class FonocamApp(ctk.CTk):
         self.geometry("1080x640")
         self.minsize(940, 560)
         try:
-            self.iconbitmap(os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                         "fonocam.ico"))
+            self.iconbitmap(resource_path("fonocam.ico"))
         except Exception:
             pass
         self.configure(fg_color=BG)
@@ -209,8 +239,10 @@ class FonocamApp(ctk.CTk):
         top = ctk.CTkFrame(self, fg_color=PANEL, corner_radius=0, height=54, border_width=0)
         top.grid(row=0, column=0, columnspan=2, sticky="ew")
         top.grid_propagate(False)
-        ctk.CTkLabel(top, text=I_CAMERA, font=ctk.CTkFont(ICON_FONT, 18),
-                     text_color=ACCENT).pack(side="left", padx=(18, 8), pady=10)
+        logo = ctk.CTkImage(make_logo(52), size=(26, 26))
+        logo_label = ctk.CTkLabel(top, text="", image=logo)
+        logo_label._image_ref = logo
+        logo_label.pack(side="left", padx=(18, 8), pady=10)
         ctk.CTkLabel(top, text="Fonocam", font=ctk.CTkFont("Segoe UI", 19, "bold"),
                      text_color=TEXT).pack(side="left", pady=10)
         self.status_chip = ctk.CTkLabel(top, text="●  Not connected", font=ctk.CTkFont("Consolas", 13),
@@ -295,6 +327,8 @@ class FonocamApp(ctk.CTk):
             f = ctk.CTkFrame(content, fg_color="transparent")
             f.grid(row=0, column=0, sticky="nsew")
             self._tab_frames[name] = f
+
+        self.after(50, lambda: select_tab("Connect"))
 
         def tab(name):
             return self._tab_frames[name]
