@@ -116,9 +116,7 @@ export default function Landing() {
       <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
           <a href="#" className="flex items-center gap-2 font-display text-lg font-bold">
-            <span className="icon-premium h-9 w-9">
-              <Camera className="h-4 w-4" weight="fill" />
-            </span>
+            <Logo className="h-9 w-9" />
             Fonocam
           </a>
           <nav className="hidden items-center gap-7 text-sm text-muted-foreground md:flex">
@@ -437,9 +435,7 @@ export default function Landing() {
         <div className="mx-auto grid max-w-6xl gap-10 sm:grid-cols-[1.4fr_1fr_1fr]">
           <div>
             <a href="#" className="flex items-center gap-2 font-display text-lg font-bold">
-              <span className="icon-premium h-9 w-9">
-                <Camera className="h-4 w-4" weight="fill" />
-              </span>
+              <Logo className="h-9 w-9" />
               Fonocam
             </a>
             <p className="mt-4 max-w-sm text-sm text-muted-foreground">
@@ -470,6 +466,24 @@ export default function Landing() {
       </footer>
     </div>
     </IconContext.Provider>
+  );
+}
+
+function Logo({ className = "h-9 w-9" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 108 108"
+      className={className}
+      aria-hidden="true"
+      style={{ boxShadow: "0 6px 18px -6px color-mix(in oklab, var(--primary) 55%, transparent)", borderRadius: 10 }}
+    >
+      <rect width="108" height="108" rx="26" fill="#14181d" />
+      <circle cx="54" cy="54" r="30" fill="#f2a93b" />
+      <circle cx="54" cy="54" r="21" fill="#14181d" />
+      <circle cx="54" cy="54" r="14" fill="#232b34" />
+      <circle cx="60" cy="46" r="5" fill="#f2a93b" />
+      <circle cx="82" cy="78" r="6.5" fill="#e5484d" />
+    </svg>
   );
 }
 
