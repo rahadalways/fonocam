@@ -7,7 +7,7 @@
 AppName=Fonocam
 AppVersion={#AppVersion}
 AppPublisher=Rahad
-AppPublisherURL=https://github.com/rahadalways/camconnect
+AppPublisherURL=https://github.com/rahadalways/fonocam
 DefaultDirName={autopf}\Fonocam
 DefaultGroupName=Fonocam
 UninstallDisplayIcon={app}\Fonocam.exe

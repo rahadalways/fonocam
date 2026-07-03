@@ -2,9 +2,9 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
-// Served from https://rahadalways.github.io/camconnect/
-// If you later point a custom (sub)domain at it, change base to "/".
+// Served at the root of the custom domain (https://fonocam.toolastic.com/)
+// on Cloudflare Pages, so base is "/".
 export default defineConfig({
-  base: "/camconnect/",
+  base: "/",
   plugins: [react(), tailwindcss()],
 });

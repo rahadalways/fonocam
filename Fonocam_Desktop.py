@@ -259,7 +259,7 @@ class FonocamApp(ctk.CTk):
                       border_color=LINE, text_color=MUTED,
                       font=ctk.CTkFont("Segoe UI", 12),
                       command=lambda: webbrowser.open(
-                          "https://rahadalways.github.io/camconnect/")
+                          "https://fonocam.toolastic.com/")
                       ).pack(side="right", padx=(0, 6))
 
         # ---- main area ----

@@ -11,16 +11,16 @@ A free, open-source DroidCam alternative for Zoom, Google Meet, Discord, Teams a
   <img alt="Platform" src="https://img.shields.io/badge/Windows%2010%2F11-0A84FF?style=flat-square&logo=windows11&logoColor=white" />
   <img alt="Android" src="https://img.shields.io/badge/Android%207.0%2B-3DDC84?style=flat-square&logo=android&logoColor=white" />
   <img alt="License" src="https://img.shields.io/badge/Free-open%20source-F2A93B?style=flat-square" />
-  <img alt="Build" src="https://img.shields.io/github/actions/workflow/status/rahadalways/camconnect/build-apk.yml?style=flat-square&label=build" />
-  <img alt="Release" src="https://img.shields.io/github/v/release/rahadalways/camconnect?style=flat-square&color=4CC38A" />
+  <img alt="Build" src="https://img.shields.io/github/actions/workflow/status/rahadalways/fonocam/build-apk.yml?style=flat-square&label=build" />
+  <img alt="Release" src="https://img.shields.io/github/v/release/rahadalways/fonocam?style=flat-square&color=4CC38A" />
 </p>
 
 <p>
-  <a href="https://github.com/rahadalways/camconnect/releases/latest/download/Fonocam-Setup.exe"><b>⬇ Download for Windows</b></a>
+  <a href="https://github.com/rahadalways/fonocam/releases/latest/download/Fonocam-Setup.exe"><b>⬇ Download for Windows</b></a>
   &nbsp;·&nbsp;
-  <a href="https://github.com/rahadalways/camconnect/releases/latest/download/Fonocam.apk"><b>⬇ Download for Android</b></a>
+  <a href="https://github.com/rahadalways/fonocam/releases/latest/download/Fonocam.apk"><b>⬇ Download for Android</b></a>
   &nbsp;·&nbsp;
-  <a href="https://rahadalways.github.io/camconnect/"><b>🌐 Website</b></a>
+  <a href="https://fonocam.toolastic.com/"><b>🌐 Website</b></a>
 </p>
 
 </div>
@@ -49,12 +49,12 @@ Your phone already has a better camera than a $100 webcam. Fonocam puts it to wo
 
 ### 🖥️ Windows
 
-1. Download **[Fonocam-Setup.exe](https://github.com/rahadalways/camconnect/releases/latest/download/Fonocam-Setup.exe)** and run it. On first launch choose **More info → Run anyway** (the app isn't code-signed yet).
+1. Download **[Fonocam-Setup.exe](https://github.com/rahadalways/fonocam/releases/latest/download/Fonocam-Setup.exe)** and run it. On first launch choose **More info → Run anyway** (the app isn't code-signed yet).
 2. Install **[OBS Studio](https://obsproject.com)** once — it registers the virtual-camera driver. You never have to open it.
 
 ### 📱 Android
 
-Install **[Fonocam.apk](https://github.com/rahadalways/camconnect/releases/latest/download/Fonocam.apk)**, allowing installs from your browser. After that the app updates itself: **Settings → Check for update**.
+Install **[Fonocam.apk](https://github.com/rahadalways/fonocam/releases/latest/download/Fonocam.apk)**, allowing installs from your browser. After that the app updates itself: **Settings → Check for update**.
 
 ### ▶️ Go live
 

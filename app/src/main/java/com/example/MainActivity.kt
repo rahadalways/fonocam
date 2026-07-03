@@ -742,7 +742,7 @@ private fun SettingsDialog(
                         docsCtx.startActivity(
                             Intent(
                                 Intent.ACTION_VIEW,
-                                android.net.Uri.parse("https://rahadalways.github.io/camconnect/")
+                                android.net.Uri.parse("https://fonocam.toolastic.com/")
                             )
                         )
                     }
@@ -787,7 +787,7 @@ private fun SettingsDialog(
                                 scope.launch(Dispatchers.IO) {
                                     try {
                                         val txt = java.net.URL(
-                                            "https://api.github.com/repos/rahadalways/camconnect/releases/latest"
+                                            "https://api.github.com/repos/rahadalways/fonocam/releases/latest"
                                         ).readText()
                                         val jo = org.json.JSONObject(txt)
                                         val tag = jo.getString("tag_name").removePrefix("v")

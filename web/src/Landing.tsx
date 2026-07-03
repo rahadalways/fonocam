@@ -12,7 +12,7 @@ const nav = [
   { label: "Setup guide", href: "#setup" },
   { label: "Specs", href: "#specs" },
   { label: "FAQ", href: "#faq" },
-  { label: "GitHub", href: "https://github.com/rahadalways/camconnect" },
+  { label: "GitHub", href: "https://github.com/rahadalways/fonocam" },
 ];
 
 const features = [
@@ -363,7 +363,7 @@ export default function Landing() {
 
             <div className="mt-8 grid gap-4 md:grid-cols-2">
               <a
-                href="https://github.com/rahadalways/camconnect/releases/latest/download/Fonocam-Setup.exe"
+                href="https://github.com/rahadalways/fonocam/releases/latest/download/Fonocam-Setup.exe"
                 className="group relative flex items-center gap-4 overflow-hidden rounded-2xl bg-primary p-5 text-primary-foreground shadow-[0_10px_40px_-12px_color-mix(in_oklab,var(--color-primary)_55%,transparent)] transition-all hover:-translate-y-0.5 hover:shadow-[0_20px_50px_-12px_color-mix(in_oklab,var(--color-primary)_65%,transparent)] sm:p-6"
               >
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary-foreground/15 ring-1 ring-inset ring-primary-foreground/25">
@@ -377,7 +377,7 @@ export default function Landing() {
               </a>
 
               <a
-                href="https://github.com/rahadalways/camconnect/releases/latest/download/Fonocam.apk"
+                href="https://github.com/rahadalways/fonocam/releases/latest/download/Fonocam.apk"
                 className="group relative flex items-center gap-4 overflow-hidden rounded-2xl border border-border bg-background/60 p-5 backdrop-blur transition-all hover:-translate-y-0.5 hover:border-primary/50 hover:bg-background/80 sm:p-6"
               >
                 <span className="icon-premium flex h-11 w-11 shrink-0 items-center justify-center rounded-xl">
@@ -454,9 +454,9 @@ export default function Landing() {
           <div>
             <div className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">Project</div>
             <ul className="mt-4 space-y-2 text-sm">
-              <li><a href="https://github.com/rahadalways/camconnect" target="_blank" rel="noopener" className="inline-flex items-center gap-2 hover:text-primary"><GithubLogo className="h-4 w-4" /> Source on GitHub</a></li>
-              <li><a href="https://github.com/rahadalways/camconnect/releases" target="_blank" rel="noopener" className="hover:text-primary">All releases</a></li>
-              <li><a href="https://github.com/rahadalways/camconnect/issues" target="_blank" rel="noopener" className="hover:text-primary">Report an issue</a></li>
+              <li><a href="https://github.com/rahadalways/fonocam" target="_blank" rel="noopener" className="inline-flex items-center gap-2 hover:text-primary"><GithubLogo className="h-4 w-4" /> Source on GitHub</a></li>
+              <li><a href="https://github.com/rahadalways/fonocam/releases" target="_blank" rel="noopener" className="hover:text-primary">All releases</a></li>
+              <li><a href="https://github.com/rahadalways/fonocam/issues" target="_blank" rel="noopener" className="hover:text-primary">Report an issue</a></li>
             </ul>
           </div>
         </div>
