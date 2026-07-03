@@ -1,0 +1,7 @@
+# Cloudflare Workers static-assets config for the Fonocam landing page.
+# Deploys the built Vite site (web/dist) as a static site — no Worker code.
+name = "fonocam"
+compatibility_date = "2025-06-01"
+
+[assets]
+directory = "./dist"
