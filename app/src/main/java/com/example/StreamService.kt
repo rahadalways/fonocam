@@ -97,7 +97,7 @@ class StreamService : LifecycleService() {
                     "toggle-flash" -> toggleFlash()
                     "switch-camera" -> switchCamera()
                     "zoom" -> value?.toFloatOrNull()?.let { setZoom(it) }
-                    "quality" -> value?.toIntOrNull()?.let { setQuality(it) }
+                    "quality" -> value?.toIntOrNull()?.let { applyQuality(it) }
                 }
             }
         }
@@ -233,7 +233,7 @@ class StreamService : LifecycleService() {
         server?.zoomLevel = zoomRatio
     }
 
-    fun setQuality(q: Int) {
+    fun applyQuality(q: Int) {
         quality = q
         server?.frameQuality = q
     }
