@@ -242,18 +242,36 @@ class CamConnectApp(ctk.CTk):
         right.grid(row=0, column=1, sticky="nsew")
         right.grid_propagate(False)
 
-        tabs = ctk.CTkTabview(
-            right, fg_color=PANEL,
-            segmented_button_fg_color=PANEL2,
-            segmented_button_selected_color=ACCENT,
-            segmented_button_selected_hover_color=ACCENT_D,
-            segmented_button_unselected_color=PANEL2,
-            segmented_button_unselected_hover_color=LINE,
-            text_color=TEXT, corner_radius=10)
-        tabs.pack(fill="both", expand=True, padx=6, pady=(2, 6))
+        # hand-rolled tab bar: fixed layout, nothing resizes on tab switch
+        tabbar = ctk.CTkFrame(right, fg_color=PANEL2, corner_radius=10)
+        tabbar.pack(fill="x", padx=10, pady=(10, 6))
+        content = ctk.CTkFrame(right, fg_color="transparent")
+        content.pack(fill="both", expand=True, padx=6, pady=(0, 6))
+        content.grid_rowconfigure(0, weight=1)
+        content.grid_columnconfigure(0, weight=1)
+
+        self._tab_btns = {}
+        self._tab_frames = {}
+
+        def select_tab(name):
+            for n, b in self._tab_btns.items():
+                b.configure(fg_color=ACCENT if n == name else "transparent",
+                            text_color="#14181d" if n == name else TEXT)
+            self._tab_frames[name].tkraise()
+
         for name in ("Connect", "Video", "Phone", "Capture"):
-            tabs.add(name)
-        tabs.set("Connect")
+            b = ctk.CTkButton(tabbar, text=name, height=30, corner_radius=8,
+                              fg_color="transparent", hover_color=LINE,
+                              text_color=TEXT, font=ctk.CTkFont("Segoe UI", 12, "bold"),
+                              command=lambda n=name: select_tab(n))
+            b.pack(side="left", fill="x", expand=True, padx=3, pady=3)
+            self._tab_btns[name] = b
+            f = ctk.CTkFrame(content, fg_color="transparent")
+            f.grid(row=0, column=0, sticky="nsew")
+            self._tab_frames[name] = f
+
+        def tab(name):
+            return self._tab_frames[name]
 
         def group(parent, title):
             card = ctk.CTkFrame(parent, fg_color=PANEL2, corner_radius=12,
@@ -266,7 +284,7 @@ class CamConnectApp(ctk.CTk):
             return f
 
         # ============ TAB: Connect ============
-        g = group(tabs.tab("Connect"), "Detected Phones")
+        g = group(tab("Connect"), "Detected Phones")
         self.device_menu = ctk.CTkOptionMenu(
             g, values=[SEARCHING], command=self.on_device_selected,
             fg_color=PANEL, button_color=PANEL, button_hover_color=LINE,
@@ -276,7 +294,7 @@ class CamConnectApp(ctk.CTk):
         self.device_menu.set(SEARCHING)
         self.device_menu.pack(fill="x", pady=(0, 6))
 
-        g = group(tabs.tab("Connect"), "Manual Address")
+        g = group(tab("Connect"), "Manual Address")
         row1 = ctk.CTkFrame(g, fg_color="transparent"); row1.pack(fill="x", pady=2)
         self.ip_entry = ctk.CTkEntry(row1, placeholder_text="Phone IP  (192.168.x.x)",
                                      fg_color=PANEL, border_color=LINE, height=34)
@@ -308,7 +326,7 @@ class CamConnectApp(ctk.CTk):
         self.usb_btn.pack(side="left")
 
         # ============ TAB: Video ============
-        g = group(tabs.tab("Video"), "Virtual Webcam Output")
+        g = group(tab("Video"), "Virtual Webcam Output")
         row = ctk.CTkFrame(g, fg_color="transparent"); row.pack(fill="x", pady=2)
         self.res_seg = ctk.CTkSegmentedButton(row, values=["480p", "720p", "1080p"],
                                               fg_color=PANEL, selected_color=ACCENT,
@@ -339,18 +357,18 @@ class CamConnectApp(ctk.CTk):
                      font=ctk.CTkFont("Segoe UI", 11), text_color=MUTED,
                      anchor="w").pack(fill="x", padx=4, pady=(4, 0))
 
-        g = group(tabs.tab("Video"), "Transform")
+        g = group(tab("Video"), "Transform")
         row = ctk.CTkFrame(g, fg_color="transparent"); row.pack(fill="x", pady=2)
         self.rot_btn = self.tool_btn(row, "↻ Rotate 0°", self.cycle_rotation)
         self.mirror_btn = self.tool_btn(row, "⇋ Mirror", self.toggle_mirror)
         self.flip_btn = self.tool_btn(row, "⇅ Flip", self.toggle_flip)
 
-        g = group(tabs.tab("Video"), "Image")
+        g = group(tab("Video"), "Image")
         self.bright_slider = self.slider(g, "☀  Brightness", -100, 100, 0, self.on_bright)
         self.contrast_slider = self.slider(g, "◐  Contrast", 40, 220, 100, self.on_contrast)
 
         # ============ TAB: Phone ============
-        g = group(tabs.tab("Phone"), "Phone Camera")
+        g = group(tab("Phone"), "Phone Camera")
         row = ctk.CTkFrame(g, fg_color="transparent"); row.pack(fill="x", pady=2)
         self.torch_btn = self.tool_btn(row, "🔦 Torch", self.toggle_torch)
         self.tool_btn(row, "🔄 Switch Cam", lambda: self.phone_action("switch-camera"))
@@ -367,7 +385,7 @@ class CamConnectApp(ctk.CTk):
         self.q_seg.pack(side="left", fill="x", expand=True)
 
         # ============ TAB: Capture ============
-        g = group(tabs.tab("Capture"), "Record & Snapshot")
+        g = group(tab("Capture"), "Record & Snapshot")
         row = ctk.CTkFrame(g, fg_color="transparent"); row.pack(fill="x", pady=(2, 4))
         self.rec_btn = self.tool_btn(row, "⏺ Record", self.toggle_record)
         self.tool_btn(row, "📷 Snapshot", self.snapshot)
@@ -375,7 +393,7 @@ class CamConnectApp(ctk.CTk):
                      font=ctk.CTkFont("Segoe UI", 11), text_color=MUTED,
                      anchor="w", justify="left").pack(fill="x", padx=4, pady=(4, 0))
 
-        g = group(tabs.tab("Capture"), "Floating Preview")
+        g = group(tab("Capture"), "Floating Preview")
         ctk.CTkLabel(g, text="Use the ⧉ button under the preview to pop out\n"
                              "a small always-on-top window. Drag to move,\n"
                              "scroll to resize, double-click to close.",
