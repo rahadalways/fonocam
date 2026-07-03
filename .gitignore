@@ -1,28 +1,35 @@
+# ---- Android / Gradle ----
 *.iml
-.gradle
-.kotlin
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
+.gradle/
+.kotlin/
 /build
 /captures
 .externalNativeBuild
 .cxx
 local.properties
-.env
 debug.keystore
-*.exe
-__pycache__/
-node_modules/
-pc-server/key.pem
-pc-server/cert.pem
-fonocam_settings.json
+.idea/
 
+# ---- Python / PyInstaller (desktop app) ----
+__pycache__/
+*.pyc
 build/
 dist/
 *.spec
+
+# ---- Node / web landing ----
+node_modules/
+web/dist/
+
+# ---- Windows installer output ----
+*.exe
+Output/
+
+# ---- Local runtime settings + secrets ----
+.env
+*_settings.json
+Fonocam.zip
+
+# ---- OS junk ----
+.DS_Store
+Thumbs.db
