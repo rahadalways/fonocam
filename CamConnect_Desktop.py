@@ -12,6 +12,7 @@ Virtual webcam needs the OBS Virtual Camera driver (install OBS Studio once).
 import json
 import os
 import shutil
+import socket
 import subprocess
 import sys
 import threading
@@ -41,6 +42,8 @@ LIVE    = "#e5484d"
 OK      = "#4cc38a"
 
 VCAM_SIZES = {"480p": (640, 480), "720p": (1280, 720), "1080p": (1920, 1080)}
+DISCOVERY_PORT = 4748
+SEARCHING = "🔍  Searching for phones…"
 
 
 def find_adb():
@@ -84,9 +87,76 @@ class CamConnectApp(ctk.CTk):
 
         self.settings = self.load_settings()
 
+        # auto-discovery: phones broadcasting on the WiFi
+        self.devices = {}            # ip -> {name, port, seen}
+        self._device_map = {}        # menu label -> (ip, port)
+        self._autofilled_ip = None
+
         self.build_ui()
+        threading.Thread(target=self.discovery_loop, daemon=True).start()
+        self.after(1000, self.refresh_devices)
         self.after(33, self.update_preview)
         self.protocol("WM_DELETE_WINDOW", self.on_close)
+
+    # ------------------------------------------------ discovery
+    def discovery_loop(self):
+        """Listen for CamConnect phones announcing themselves on the WiFi."""
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            sock.bind(("", DISCOVERY_PORT))
+            sock.settimeout(1.0)
+        except Exception:
+            return
+        while True:
+            try:
+                data, addr = sock.recvfrom(1024)
+                info = json.loads(data.decode("utf-8", "ignore"))
+                if info.get("app") == "camconnect":
+                    self.devices[addr[0]] = {
+                        "name": str(info.get("name", "Phone"))[:40],
+                        "port": int(info.get("port", 8080)),
+                        "seen": time.time(),
+                    }
+            except Exception:
+                pass
+
+    def refresh_devices(self):
+        now = time.time()
+        self.devices = {ip: d for ip, d in self.devices.items() if now - d["seen"] < 8}
+        self._device_map = {
+            f"📱  {d['name']}  ·  {ip}": (ip, d["port"])
+            for ip, d in sorted(self.devices.items())
+        }
+        labels = list(self._device_map.keys())
+        if labels:
+            self.device_menu.configure(values=labels)
+            if self.device_menu.get() == SEARCHING:
+                self.device_menu.set(labels[0])
+            # zero-typing: fill the fields automatically unless the user
+            # typed their own IP
+            ip_now = self.ip_entry.get().strip()
+            if not self.connected and (not ip_now or ip_now == self._autofilled_ip):
+                first_ip, first_port = self._device_map[labels[0]]
+                if ip_now != first_ip:
+                    self.ip_entry.delete(0, "end")
+                    self.ip_entry.insert(0, first_ip)
+                    self.port_entry.delete(0, "end")
+                    self.port_entry.insert(0, str(first_port))
+                self._autofilled_ip = first_ip
+        else:
+            self.device_menu.configure(values=[SEARCHING])
+            self.device_menu.set(SEARCHING)
+        self.after(1000, self.refresh_devices)
+
+    def on_device_selected(self, label):
+        ip, port = self._device_map.get(label, (None, None))
+        if ip:
+            self.ip_entry.delete(0, "end")
+            self.ip_entry.insert(0, ip)
+            self.port_entry.delete(0, "end")
+            self.port_entry.insert(0, str(port))
+            self._autofilled_ip = ip
 
     # ------------------------------------------------ settings
     def load_settings(self):
@@ -140,7 +210,7 @@ class CamConnectApp(ctk.CTk):
                                         text_color=MUTED, anchor="w")
         self.stream_info.grid(row=0, column=0, sticky="ew", padx=16, pady=(10, 0))
 
-        self.preview = ctk.CTkLabel(left, text="Phone e app on koro,\ntarpor Connect chapo",
+        self.preview = ctk.CTkLabel(left, text="Open CamConnect on your phone and press Start —\nit will appear in the list on the right.",
                                     font=ctk.CTkFont("Segoe UI", 15), text_color=MUTED,
                                     fg_color="#0b0e11", corner_radius=10)
         self.preview.grid(row=1, column=0, sticky="nsew", padx=12, pady=10)
@@ -165,6 +235,15 @@ class CamConnectApp(ctk.CTk):
 
         # -- connect --
         g = group("Connect")
+        self.device_menu = ctk.CTkOptionMenu(
+            g, values=[SEARCHING], command=self.on_device_selected,
+            fg_color=PANEL2, button_color=PANEL2, button_hover_color=LINE,
+            dropdown_fg_color=PANEL2, dropdown_hover_color=LINE,
+            text_color=TEXT, height=34, corner_radius=8,
+            font=ctk.CTkFont("Segoe UI", 12))
+        self.device_menu.set(SEARCHING)
+        self.device_menu.pack(fill="x", pady=(0, 6))
+
         row1 = ctk.CTkFrame(g, fg_color="transparent"); row1.pack(fill="x", pady=2)
         self.ip_entry = ctk.CTkEntry(row1, placeholder_text="Phone IP  (192.168.x.x)",
                                      fg_color=PANEL2, border_color=LINE, height=34)
@@ -174,7 +253,7 @@ class CamConnectApp(ctk.CTk):
         self.port_entry.pack(side="left")
 
         row2 = ctk.CTkFrame(g, fg_color="transparent"); row2.pack(fill="x", pady=(6, 2))
-        self.pin_entry = ctk.CTkEntry(row2, placeholder_text="PIN (phone screen e ache)",
+        self.pin_entry = ctk.CTkEntry(row2, placeholder_text="PIN (shown on the phone)",
                                       fg_color=PANEL2, border_color=LINE, height=34)
         self.pin_entry.pack(side="left", fill="x", expand=True)
 
@@ -291,7 +370,9 @@ class CamConnectApp(ctk.CTk):
     def connect(self):
         ip = self.ip_entry.get().strip()
         if not ip:
-            messagebox.showwarning("CamConnect", "Phone er IP address ta dao age.\n(Phone er app e boro kore lekha ache)")
+            messagebox.showwarning("CamConnect",
+                                   "Enter the phone's IP address first, or wait for your\n"
+                                   "phone to appear in the detected-devices list.")
             return
         self.save_settings()
         self.stop_stream.clear()
@@ -398,11 +479,11 @@ class CamConnectApp(ctk.CTk):
         self.connect_btn.configure(text="Connect (WiFi)", state="normal")
         self.status_chip.configure(text="●  Connection failed", text_color=LIVE)
         messagebox.showerror("CamConnect",
-                             "Phone er sathe connect hocche na.\n\n"
-                             "Check koro:\n"
-                             "  1. Phone er app e ▶ Start chapa ache kina (STREAMING dekhabe)\n"
-                             "  2. Phone ar PC same WiFi te ache kina (USB hole cable lagano ache kina)\n"
-                             "  3. IP, Port ar PIN thik ache kina")
+                             "Could not connect to the phone.\n\n"
+                             "Please check:\n"
+                             "  1. The phone app is streaming (press ▶ Start on the phone)\n"
+                             "  2. Phone and PC are on the same WiFi (or the USB cable is plugged in)\n"
+                             "  3. IP, port and PIN are correct")
 
     def on_stream_dropped(self):
         self.disconnect()
@@ -450,7 +531,7 @@ class CamConnectApp(ctk.CTk):
         else:
             self.stream_info.configure(text="—", text_color=MUTED)
             if not self.connected:
-                self.preview.configure(image=None, text="Phone e app on koro,\ntarpor Connect chapo")
+                self.preview.configure(image=None, text="Open CamConnect on your phone and press Start —\nit will appear in the list on the right.")
                 self.preview._image_ref = None
         self.after(33, self.update_preview)
 
@@ -462,7 +543,7 @@ class CamConnectApp(ctk.CTk):
                                     fg_color=ACCENT, text_color="#14181d")
             return
         if not self.connected:
-            messagebox.showwarning("CamConnect", "Age phone er sathe connect koro.")
+            messagebox.showwarning("CamConnect", "Connect to the phone first.")
             return
         self.vcam_running = True
         self.vcam_btn.configure(text="■   Stop Virtual Webcam",
@@ -483,11 +564,10 @@ class CamConnectApp(ctk.CTk):
                                         fg_color=ACCENT, text_color="#14181d"),
                 messagebox.showerror(
                     "Virtual Webcam",
-                    "Virtual webcam chalu hocche na.\n\n"
-                    "PC te 'OBS Studio' install kora lagbe (free) —\n"
-                    "eta e virtual camera driver ta dey.\n\n"
-                    "obsproject.com theke namiye install koro,\n"
-                    "tarpor abar try koro.\n\n"
+                    "Could not start the virtual webcam.\n\n"
+                    "This feature needs the OBS Virtual Camera driver.\n"
+                    "Install OBS Studio (free) from obsproject.com,\n"
+                    "then try again.\n\n"
                     f"Error: {e}")))
             return
         canvas = np.zeros((h, w, 3), dtype=np.uint8)
@@ -512,11 +592,11 @@ class CamConnectApp(ctk.CTk):
         if not adb:
             messagebox.showerror(
                 "USB Connect",
-                "PC te 'adb' pawa gelo na.\n\n"
-                "USB connect korte adb lage. Duita way:\n"
-                "  1. Android Studio install thakle eta auto pawa jay\n"
-                "  2. Google 'platform-tools' namiye PATH e add koro\n\n"
-                "developer.android.com/tools/releases/platform-tools")
+                "adb was not found on this PC.\n\n"
+                "USB mode needs Android platform-tools (adb).\n"
+                "Download them from:\n"
+                "developer.android.com/tools/releases/platform-tools\n"
+                "and extract to %LOCALAPPDATA%\\Android\\Sdk\\platform-tools")
             return
         port = self.port_entry.get().strip() or "8080"
         try:
@@ -525,19 +605,19 @@ class CamConnectApp(ctk.CTk):
             if not devices:
                 messagebox.showwarning(
                     "USB Connect",
-                    "Kono phone pawa jay nai USB te.\n\n"
-                    "  1. USB cable diye phone lagao\n"
-                    "  2. Phone e Developer Options → USB debugging ON koro\n"
-                    "  3. Phone e 'Allow USB debugging' popup ashle Allow chapo")
+                    "No phone was found over USB.\n\n"
+                    "  1. Plug the phone in with a USB cable\n"
+                    "  2. Enable Developer Options → USB debugging on the phone\n"
+                    "  3. Tap 'Allow' when the USB-debugging prompt appears")
                 return
             fwd = subprocess.run([adb, "forward", f"tcp:{port}", f"tcp:{port}"],
                                  capture_output=True, text=True, timeout=15)
             if fwd.returncode != 0:
                 messagebox.showerror("USB Connect",
-                                     f"USB tunnel banate problem holo:\n{fwd.stderr.strip()}")
+                                     f"Could not set up the USB tunnel:\n{fwd.stderr.strip()}")
                 return
         except Exception as e:
-            messagebox.showerror("USB Connect", f"adb cholate problem holo:\n{e}")
+            messagebox.showerror("USB Connect", f"Failed to run adb:\n{e}")
             return
         # tunnel ready — connect over localhost
         self.ip_entry.delete(0, "end")
@@ -606,12 +686,12 @@ class CamConnectApp(ctk.CTk):
             self.set_active(self.rec_btn, False)
             self.rec_btn.configure(text="⏺ Record")
             if self.record_path:
-                messagebox.showinfo("CamConnect", f"Video save hoyeche:\n{self.record_path}")
+                messagebox.showinfo("CamConnect", f"Video saved:\n{self.record_path}")
             return
         with self.frame_lock:
             frame = self.frame
             if frame is None:
-                messagebox.showwarning("CamConnect", "Age connect koro, tarpor record.")
+                messagebox.showwarning("CamConnect", "Connect first, then record.")
                 return
             h, w = frame.shape[:2]
             folder = os.path.join(os.path.expanduser("~"), "Videos", "CamConnect")
@@ -627,13 +707,13 @@ class CamConnectApp(ctk.CTk):
         with self.frame_lock:
             frame = None if self.frame is None else self.frame.copy()
         if frame is None:
-            messagebox.showwarning("CamConnect", "Age connect koro, tarpor snapshot.")
+            messagebox.showwarning("CamConnect", "Connect first, then take a snapshot.")
             return
         folder = os.path.join(os.path.expanduser("~"), "Pictures", "CamConnect")
         os.makedirs(folder, exist_ok=True)
         path = os.path.join(folder, datetime.now().strftime("CamConnect_%Y%m%d_%H%M%S.jpg"))
         cv2.imwrite(path, frame)
-        messagebox.showinfo("CamConnect", f"Snapshot save hoyeche:\n{path}")
+        messagebox.showinfo("CamConnect", f"Snapshot saved:\n{path}")
 
     # ------------------------------------------------ close
     def on_close(self):

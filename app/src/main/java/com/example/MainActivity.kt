@@ -69,6 +69,8 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
+import com.example.ui.theme.AppFont
+import com.example.ui.theme.MonoFont
 import com.example.ui.theme.MyApplicationTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -218,6 +220,7 @@ fun CamConnectApp(prefs: SharedPreferences) {
         }
         server.isSecurityEnabled = securityOn
         server.serverPin = serverPin
+        server.deviceName = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}".trim()
         server.flashState = flashEnabled
         server.zoomLevel = zoomRatio
         server.frameQuality = quality
@@ -291,7 +294,7 @@ fun CamConnectApp(prefs: SharedPreferences) {
                 Icon(Icons.Default.Videocam, null, tint = Muted, modifier = Modifier.size(48.dp))
                 Spacer(Modifier.height(12.dp))
                 Text(
-                    "Camera permission lagbe.\nSettings theke allow kore dao.",
+                    "Camera permission is required.\nPlease allow it in system Settings.",
                     color = Muted, fontSize = 15.sp, textAlign = TextAlign.Center
                 )
             }
@@ -338,7 +341,7 @@ fun CamConnectApp(prefs: SharedPreferences) {
                     color = if (isStreaming) Color.White else Muted,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold,
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = MonoFont,
                     letterSpacing = 1.5.sp
                 )
             }
@@ -364,7 +367,7 @@ fun CamConnectApp(prefs: SharedPreferences) {
                 color = Color.White,
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
-                fontFamily = FontFamily.Monospace,
+                fontFamily = MonoFont,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
                     .statusBarsPadding()
@@ -392,26 +395,26 @@ fun CamConnectApp(prefs: SharedPreferences) {
                     .clickable {
                         wake()
                         clipboard.setText(AnnotatedString("$localIp:$serverPort"))
-                        Toast.makeText(context, "Address copy hoyeche ✓", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Address copied", Toast.LENGTH_SHORT).show()
                     }
                     .padding(horizontal = 22.dp, vertical = 12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "PC-TE EI THIKANA DAO · TAP = COPY",
+                    text = "ENTER THIS ON YOUR PC · TAP TO COPY",
                     color = Muted, fontSize = 10.sp,
-                    fontFamily = FontFamily.Monospace, letterSpacing = 1.5.sp
+                    fontFamily = MonoFont, letterSpacing = 1.5.sp
                 )
                 Text(
                     text = "$localIp:$serverPort",
                     color = TextC, fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace
+                    fontWeight = FontWeight.Bold, fontFamily = MonoFont
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
                     text = if (securityOn) "PIN  $serverPin" else "PIN OFF",
                     color = if (securityOn) Accent else Muted, fontSize = 15.sp,
-                    fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace,
+                    fontWeight = FontWeight.Bold, fontFamily = MonoFont,
                     letterSpacing = 2.sp
                 )
             }
@@ -481,12 +484,12 @@ fun CamConnectApp(prefs: SharedPreferences) {
                     Box(Modifier.size(10.dp).clip(CircleShape).background(Live))
                     Spacer(Modifier.height(14.dp))
                     Text(
-                        "Streaming cholche…",
-                        color = Muted, fontSize = 14.sp, fontFamily = FontFamily.Monospace
+                        "Streaming in background…",
+                        color = Muted, fontSize = 14.sp, fontFamily = MonoFont
                     )
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        "Battery saver on · screen e tap koro",
+                        "Battery saver · tap anywhere to wake",
                         color = Color(0xFF4A545E), fontSize = 12.sp
                     )
                 }
@@ -578,7 +581,7 @@ private fun SettingsDialog(
 
             if (isStreaming) {
                 Text(
-                    "⚠ Streaming cholche — Resolution/Port change korle Stop kore abar Start dio.",
+                    "⚠ Streaming is live — stop and start again after changing resolution or port.",
                     color = Accent, fontSize = 12.sp, lineHeight = 16.sp
                 )
             }
@@ -679,7 +682,7 @@ private fun SettingsDialog(
                         }
                     }
                     Text(
-                        "PIN chhara keu stream dekhte parbe na.",
+                        "Only devices with this PIN can view the stream.",
                         color = Muted, fontSize = 11.sp
                     )
                 }
@@ -690,7 +693,7 @@ private fun SettingsDialog(
                 Column(Modifier.weight(1f)) {
                     SettingLabel("BATTERY SAVER")
                     Text(
-                        "30s haat na dile screen kalo hoye jabe (stream choltei thakbe)",
+                        "Screen dims after 30 s of inactivity — streaming keeps running",
                         color = Muted, fontSize = 11.sp, lineHeight = 15.sp
                     )
                 }
@@ -708,7 +711,7 @@ private fun SettingsDialog(
             }
 
             Text(
-                "Zoom, quality, torch — egulo PC software theke o control kora jay. Viewfinder e pinch korle zoom hoy.",
+                "Zoom, quality and torch can also be controlled from the PC app. Pinch the viewfinder to zoom.",
                 color = Color(0xFF5A6570), fontSize = 11.sp, lineHeight = 15.sp
             )
         }
@@ -720,7 +723,7 @@ private fun SettingLabel(text: String) {
     Text(
         text = text,
         color = Muted, fontSize = 11.sp,
-        fontFamily = FontFamily.Monospace,
+        fontFamily = MonoFont,
         fontWeight = FontWeight.Bold, letterSpacing = 1.5.sp
     )
 }

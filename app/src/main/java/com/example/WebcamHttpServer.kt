@@ -47,6 +47,10 @@ class WebcamHttpServer(
     @Volatile
     var serverPin = "1234"
 
+    // shown in the PC app's auto-detected device list
+    @Volatile
+    var deviceName = "Android Phone"
+
     private val activeStreamsCount = java.util.concurrent.atomic.AtomicInteger(0)
     
     @Volatile
@@ -63,8 +67,8 @@ class WebcamHttpServer(
         executor.execute {
             try {
                 serverSocket = ServerSocket(port)
-                Log.d("WebcamHttpServer", "DroidCam Server started on port $port")
-                
+                Log.d("WebcamHttpServer", "CamConnect server started on port $port")
+
                 while (isRunning.get()) {
                     val socket = serverSocket?.accept() ?: break
                     executor.execute { handleClient(socket) }
@@ -73,6 +77,34 @@ class WebcamHttpServer(
                 Log.e("WebcamHttpServer", "Error in server socket loop", e)
             }
         }
+
+        // discovery beacon: broadcast our presence every 2s so the PC app
+        // can list this phone automatically (no manual IP entry needed)
+        executor.execute {
+            try {
+                val sock = java.net.DatagramSocket()
+                sock.broadcast = true
+                val target = java.net.InetAddress.getByName("255.255.255.255")
+                while (isRunning.get()) {
+                    try {
+                        val safeName = deviceName.replace("\"", "").take(40)
+                        val msg = """{"app":"camconnect","name":"$safeName","port":$port}"""
+                        val bytes = msg.toByteArray()
+                        sock.send(java.net.DatagramPacket(bytes, bytes.size, target, DISCOVERY_PORT))
+                    } catch (e: Exception) {
+                        // network hiccup — keep trying
+                    }
+                    Thread.sleep(2000)
+                }
+                sock.close()
+            } catch (e: Exception) {
+                Log.e("WebcamHttpServer", "Discovery beacon failed", e)
+            }
+        }
+    }
+
+    companion object {
+        const val DISCOVERY_PORT = 4748
     }
     
     fun stop() {
