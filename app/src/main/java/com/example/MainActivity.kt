@@ -270,7 +270,10 @@ fun CamConnectApp(prefs: SharedPreferences) {
                 targetResolution = targetResolution,
                 quality = quality,
                 shouldCapture = isStreaming,
-                onFrameCaptured = { bytes -> serverInstance?.latestFrame = bytes },
+                onFrameCaptured = { bytes, rotation ->
+                    serverInstance?.latestFrame = bytes
+                    serverInstance?.streamRotation = rotation
+                },
                 modifier = Modifier
                     .fillMaxSize()
                     .pointerInput(Unit) {
@@ -796,7 +799,7 @@ fun CameraPreviewContainer(
     targetResolution: android.util.Size,
     quality: Int,
     shouldCapture: Boolean,
-    onFrameCaptured: (ByteArray) -> Unit,
+    onFrameCaptured: (ByteArray, Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -866,9 +869,10 @@ fun CameraPreviewContainer(
             try {
                 val now = System.currentTimeMillis()
                 if (shouldCapture && (now - lastProcessedTime >= 33)) {
-                    val jpegBytes = imageProxy.toJpegBytes(quality, "None")
+                    // applyRotation = false: PC rotates instead (avoids double JPEG encode)
+                    val jpegBytes = imageProxy.toJpegBytes(quality, "None", applyRotation = false)
                     if (jpegBytes != null) {
-                        onFrameCaptured(jpegBytes)
+                        onFrameCaptured(jpegBytes, imageProxy.imageInfo.rotationDegrees)
                         lastProcessedTime = now
                     }
                 }

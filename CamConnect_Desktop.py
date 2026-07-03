@@ -69,7 +69,8 @@ class CamConnectApp(ctk.CTk):
         self.frame_lock = threading.Lock()
         self.frame = None              # latest processed BGR frame
         self.fps = 0.0
-        self.rotation = 0              # 0 / 90 / 180 / 270
+        self.rotation = 0              # user-chosen extra rotation: 0 / 90 / 180 / 270
+        self.auto_rotation = 0         # phone sensor rotation, from /status
         self.mirror = False
         self.flip_v = False
         self.brightness = 0            # -100 .. 100
@@ -315,34 +316,78 @@ class CamConnectApp(ctk.CTk):
         q = self.auth_query()
         if q:
             url += "?" + q
-        cap = cv2.VideoCapture(url)
-        if not cap.isOpened():
+        try:
+            stream = urllib.request.urlopen(url, timeout=6)
+        except Exception:
             self.after(0, self.on_stream_failed)
             return
 
         self.connected = True
         self.after(0, self.on_stream_started)
+        threading.Thread(target=self.status_loop, daemon=True).start()
+
+        # Parse the MJPEG stream by hand and always decode only the NEWEST
+        # complete JPEG in the buffer — old frames are dropped, so the video
+        # never builds up lag when the network hiccups.
+        buf = b""
         last = time.time()
         n = 0
-        while not self.stop_stream.is_set():
-            ok, frame = cap.read()
-            if not ok:
-                break
-            frame = self.process(frame)
-            with self.frame_lock:
-                self.frame = frame
-                if self.recording and self.video_writer is not None:
-                    self.video_writer.write(frame)
-            n += 1
-            now = time.time()
-            if now - last >= 1.0:
-                self.fps = n / (now - last)
-                n = 0
-                last = now
-        cap.release()
+        try:
+            while not self.stop_stream.is_set():
+                # read1 = whatever bytes are available right now (no waiting
+                # to fill the whole buffer) — keeps latency at zero
+                chunk = stream.read1(65536)
+                if not chunk:
+                    break
+                buf += chunk
+                end = buf.rfind(b"\xff\xd9")
+                if end == -1:
+                    if len(buf) > 8_000_000:
+                        buf = buf[-1_000_000:]
+                    continue
+                start = buf.rfind(b"\xff\xd8", 0, end)
+                if start == -1:
+                    buf = buf[end + 2:]
+                    continue
+                jpg = buf[start:end + 2]
+                buf = buf[end + 2:]
+                frame = cv2.imdecode(np.frombuffer(jpg, np.uint8), cv2.IMREAD_COLOR)
+                if frame is None:
+                    continue
+                frame = self.process(frame)
+                with self.frame_lock:
+                    self.frame = frame
+                    if self.recording and self.video_writer is not None:
+                        self.video_writer.write(frame)
+                n += 1
+                now = time.time()
+                if now - last >= 1.0:
+                    self.fps = n / (now - last)
+                    n = 0
+                    last = now
+        except Exception:
+            pass
+        try:
+            stream.close()
+        except Exception:
+            pass
         if not self.stop_stream.is_set():
             # dropped unexpectedly
             self.after(0, self.on_stream_dropped)
+
+    def status_loop(self):
+        """Poll the phone's /status: picks up sensor rotation (and future state)."""
+        while self.connected and not self.stop_stream.is_set():
+            try:
+                url = f"{self.base_url()}/status"
+                q = self.auth_query()
+                if q:
+                    url += "?" + q
+                data = json.loads(urllib.request.urlopen(url, timeout=4).read().decode())
+                self.auto_rotation = int(data.get("rotation", 0)) % 360
+            except Exception:
+                pass
+            time.sleep(2)
 
     def on_stream_started(self):
         self.connect_btn.configure(text="Disconnect", state="normal",
@@ -355,8 +400,8 @@ class CamConnectApp(ctk.CTk):
         messagebox.showerror("CamConnect",
                              "Phone er sathe connect hocche na.\n\n"
                              "Check koro:\n"
-                             "  1. Phone ar PC same WiFi te ache kina\n"
-                             "  2. Phone e app ta cholche kina\n"
+                             "  1. Phone er app e ▶ Start chapa ache kina (STREAMING dekhabe)\n"
+                             "  2. Phone ar PC same WiFi te ache kina (USB hole cable lagano ache kina)\n"
                              "  3. IP, Port ar PIN thik ache kina")
 
     def on_stream_dropped(self):
@@ -365,11 +410,12 @@ class CamConnectApp(ctk.CTk):
 
     # ------------------------------------------------ frame processing
     def process(self, frame):
-        if self.rotation == 90:
+        total_rotation = (self.auto_rotation + self.rotation) % 360
+        if total_rotation == 90:
             frame = cv2.rotate(frame, cv2.ROTATE_90_CLOCKWISE)
-        elif self.rotation == 180:
+        elif total_rotation == 180:
             frame = cv2.rotate(frame, cv2.ROTATE_180)
-        elif self.rotation == 270:
+        elif total_rotation == 270:
             frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
         if self.mirror:
             frame = cv2.flip(frame, 1)
@@ -484,8 +530,12 @@ class CamConnectApp(ctk.CTk):
                     "  2. Phone e Developer Options → USB debugging ON koro\n"
                     "  3. Phone e 'Allow USB debugging' popup ashle Allow chapo")
                 return
-            subprocess.run([adb, "forward", f"tcp:{port}", f"tcp:{port}"],
-                           capture_output=True, text=True, timeout=15)
+            fwd = subprocess.run([adb, "forward", f"tcp:{port}", f"tcp:{port}"],
+                                 capture_output=True, text=True, timeout=15)
+            if fwd.returncode != 0:
+                messagebox.showerror("USB Connect",
+                                     f"USB tunnel banate problem holo:\n{fwd.stderr.strip()}")
+                return
         except Exception as e:
             messagebox.showerror("USB Connect", f"adb cholate problem holo:\n{e}")
             return

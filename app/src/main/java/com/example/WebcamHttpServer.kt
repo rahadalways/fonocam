@@ -37,6 +37,10 @@ class WebcamHttpServer(
     @Volatile
     var frameQuality = 70
 
+    // sensor rotation in degrees; the PC client rotates the frame (much cheaper there)
+    @Volatile
+    var streamRotation = 0
+
     @Volatile
     var isSecurityEnabled = true
 
@@ -155,7 +159,8 @@ class WebcamHttpServer(
                             "flash": $flashState,
                             "camera": "$currentCamera",
                             "zoom": $zoomLevel,
-                            "quality": $frameQuality
+                            "quality": $frameQuality,
+                            "rotation": $streamRotation
                         }""".trimIndent())
                     } else {
                         serveUnauthorized(writer)
@@ -987,8 +992,10 @@ fun cropBitmapToAspectRatio(bitmap: Bitmap, aspectRatio: String): Bitmap {
     }
 }
 
-// Highly efficient YUV/ARGB ImageProxy to JPEG converter
-fun ImageProxy.toJpegBytes(quality: Int = 70, aspectRatio: String = "None"): ByteArray? {
+// Highly efficient YUV/ARGB ImageProxy to JPEG converter.
+// applyRotation = false skips the expensive decode-rotate-reencode pass;
+// the PC client rotates instead using the /status "rotation" value.
+fun ImageProxy.toJpegBytes(quality: Int = 70, aspectRatio: String = "None", applyRotation: Boolean = true): ByteArray? {
     try {
         if (format == ImageFormat.YUV_420_888) {
             val w = width
@@ -1051,7 +1058,7 @@ fun ImageProxy.toJpegBytes(quality: Int = 70, aspectRatio: String = "None"): Byt
             yuvImage.compressToJpeg(Rect(0, 0, w, h), quality, out)
             val jpegBytes = out.toByteArray()
             
-            val rotation = imageInfo.rotationDegrees
+            val rotation = if (applyRotation) imageInfo.rotationDegrees else 0
             if (rotation != 0 || aspectRatio != "None") {
                 var bitmap = android.graphics.BitmapFactory.decodeByteArray(jpegBytes, 0, jpegBytes.size)
                 if (bitmap != null) {
@@ -1077,7 +1084,7 @@ fun ImageProxy.toJpegBytes(quality: Int = 70, aspectRatio: String = "None"): Byt
             var bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
             bitmap.copyPixelsFromBuffer(buffer)
             
-            val rotation = imageInfo.rotationDegrees
+            val rotation = if (applyRotation) imageInfo.rotationDegrees else 0
             if (rotation != 0) {
                 val matrix = android.graphics.Matrix().apply { postRotate(rotation.toFloat()) }
                 val rotated = Bitmap.createBitmap(bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true)
