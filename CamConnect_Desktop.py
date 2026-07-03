@@ -229,14 +229,27 @@ class CamConnectApp(ctk.CTk):
                                       height=44, corner_radius=10, command=self.toggle_vcam)
         self.vcam_btn.grid(row=0, column=0, sticky="ew", padx=(0, 8))
 
+        # capture controls live right under the video, where they belong
+        self.rec_btn = ctk.CTkButton(btnrow, text="⏺ Rec", width=84, height=44, corner_radius=10,
+                                     font=ctk.CTkFont("Segoe UI", 13, "bold"),
+                                     fg_color=PANEL2, hover_color=LINE, border_width=1,
+                                     border_color=LINE, text_color=TEXT,
+                                     command=self.toggle_record)
+        self.rec_btn.grid(row=0, column=1, padx=(0, 8))
+
+        self.snap_btn = ctk.CTkButton(btnrow, text="📷", width=54, height=44, corner_radius=10,
+                                      font=ctk.CTkFont("Segoe UI", 16),
+                                      fg_color=PANEL2, hover_color=LINE, border_width=1,
+                                      border_color=LINE, text_color=TEXT,
+                                      command=self.snapshot)
+        self.snap_btn.grid(row=0, column=2, padx=(0, 8))
+
         self.pip_btn = ctk.CTkButton(btnrow, text="⧉", width=54, height=44, corner_radius=10,
                                      font=ctk.CTkFont("Segoe UI", 18),
                                      fg_color=PANEL2, hover_color=LINE, border_width=1,
                                      border_color=LINE, text_color=TEXT,
                                      command=self.toggle_pip)
-        self.pip_btn.grid(row=0, column=1)
-        # tooltip-ish hint under the row is overkill; the button toggles the
-        # floating always-on-top preview used while screen recording
+        self.pip_btn.grid(row=0, column=3)
 
         # ---- right: controls, organised in tabs (no scrolling needed) ----
         right = ctk.CTkFrame(main, fg_color=PANEL, corner_radius=14,
@@ -261,7 +274,7 @@ class CamConnectApp(ctk.CTk):
                             text_color="#14181d" if n == name else TEXT)
             self._tab_frames[name].tkraise()
 
-        for name in ("Connect", "Video", "Phone", "Capture"):
+        for name in ("Connect", "Video", "Phone"):
             b = ctk.CTkButton(tabbar, text=name, height=30, corner_radius=8,
                               fg_color="transparent", hover_color=LINE,
                               text_color=TEXT, font=ctk.CTkFont("Segoe UI", 12, "bold"),
@@ -394,21 +407,6 @@ class CamConnectApp(ctk.CTk):
                      font=ctk.CTkFont("Segoe UI", 11), text_color=MUTED,
                      anchor="w", justify="left").pack(fill="x", padx=4, pady=(4, 0))
 
-        # ============ TAB: Capture ============
-        g = group(tab("Capture"), "Record & Snapshot")
-        row = ctk.CTkFrame(g, fg_color="transparent"); row.pack(fill="x", pady=(2, 4))
-        self.rec_btn = self.tool_btn(row, "⏺ Record", self.toggle_record)
-        self.tool_btn(row, "📷 Snapshot", self.snapshot)
-        ctk.CTkLabel(g, text="Videos go to Videos\\CamConnect,\nsnapshots to Pictures\\CamConnect.",
-                     font=ctk.CTkFont("Segoe UI", 11), text_color=MUTED,
-                     anchor="w", justify="left").pack(fill="x", padx=4, pady=(4, 0))
-
-        g = group(tab("Capture"), "Floating Preview")
-        ctk.CTkLabel(g, text="Use the ⧉ button under the preview to pop out\n"
-                             "a small always-on-top window. Drag to move,\n"
-                             "scroll to resize, double-click to close.",
-                     font=ctk.CTkFont("Segoe UI", 11), text_color=MUTED,
-                     anchor="w", justify="left").pack(fill="x", padx=4, pady=(0, 4))
 
     def tool_btn(self, parent, text, cmd):
         b = ctk.CTkButton(parent, text=text, height=34, corner_radius=8,
@@ -847,8 +845,8 @@ class CamConnectApp(ctk.CTk):
                 if self.video_writer is not None:
                     self.video_writer.release()
                     self.video_writer = None
-            self.set_active(self.rec_btn, False)
-            self.rec_btn.configure(text="⏺ Record")
+            self.rec_btn.configure(text="⏺ Rec", fg_color=PANEL2,
+                                   text_color=TEXT, border_color=LINE)
             if self.record_path:
                 messagebox.showinfo("CamConnect", f"Video saved:\n{self.record_path}")
             return
@@ -864,8 +862,8 @@ class CamConnectApp(ctk.CTk):
             fourcc = cv2.VideoWriter_fourcc(*"mp4v")
             self.video_writer = cv2.VideoWriter(self.record_path, fourcc, max(self.fps, 10.0), (w, h))
         self.recording = True
-        self.set_active(self.rec_btn, True)
-        self.rec_btn.configure(text="⏹ Stop Rec")
+        self.rec_btn.configure(text="⏹ Stop", fg_color=LIVE,
+                               text_color="#ffffff", border_color=LIVE)
 
     def snapshot(self):
         with self.frame_lock:
