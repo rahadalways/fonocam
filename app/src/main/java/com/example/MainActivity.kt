@@ -73,6 +73,7 @@ import com.example.ui.theme.MonoFont
 import com.example.ui.theme.MyApplicationTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.net.NetworkInterface
 import java.util.Collections
@@ -482,7 +483,7 @@ fun CamConnectApp(prefs: SharedPreferences) {
             Spacer(Modifier.height(10.dp))
             AnimatedVisibility(visible = isStreaming, enter = fadeIn(), exit = fadeOut()) {
                 Text(
-                    "You can close the app — streaming keeps running in the background.",
+                    "You can close the app. Streaming keeps running in the background.",
                     color = Muted.copy(alpha = 0.8f), fontSize = 11.sp,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(horizontal = 40.dp)
@@ -608,7 +609,7 @@ private fun SettingsDialog(
 
             if (isStreaming) {
                 Text(
-                    "⚠ Streaming is live — stop and start again after changing resolution or port.",
+                    "⚠ Streaming is live. Stop and start again after changing resolution or port.",
                     color = Accent, fontSize = 12.sp, lineHeight = 16.sp
                 )
             }
@@ -720,7 +721,7 @@ private fun SettingsDialog(
                 Column(Modifier.weight(1f)) {
                     SettingLabel("BATTERY SAVER")
                     Text(
-                        "Screen dims after 30 s of inactivity — streaming keeps running",
+                        "Screen dims after 30 s of inactivity. Streaming keeps running.",
                         color = Muted, fontSize = 11.sp, lineHeight = 15.sp
                     )
                 }
@@ -738,9 +739,104 @@ private fun SettingsDialog(
             }
 
             Text(
-                "Streaming runs as a background service with a notification — you can leave the app or turn the screen off. The ⏺ button records a backup video on the phone (Movies/CamConnect). Pinch the viewfinder to zoom.",
+                "Streaming runs as a background service with a notification, so you can leave the app or turn the screen off. The record button saves a backup video on the phone (Movies/CamConnect). Pinch the viewfinder to zoom.",
                 color = Color(0xFF5A6570), fontSize = 11.sp, lineHeight = 15.sp
             )
+
+            // ---- app update ----
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                SettingLabel("APP UPDATE")
+                val ctx = LocalContext.current
+                val scope = rememberCoroutineScope()
+                val currentVersion = remember {
+                    try {
+                        ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName ?: "?"
+                    } catch (e: Exception) {
+                        "?"
+                    }
+                }
+                var checking by remember { mutableStateOf(false) }
+                var updateInfo by remember { mutableStateOf<Pair<String, String>?>(null) }
+                var statusMsg by remember { mutableStateOf<String?>(null) }
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        "v$currentVersion",
+                        color = Muted, fontSize = 12.sp, fontFamily = MonoFont
+                    )
+                    Spacer(Modifier.weight(1f))
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(Panel2)
+                            .border(1.dp, Line, RoundedCornerShape(10.dp))
+                            .clickable(enabled = !checking) {
+                                checking = true
+                                statusMsg = null
+                                updateInfo = null
+                                scope.launch(Dispatchers.IO) {
+                                    try {
+                                        val txt = java.net.URL(
+                                            "https://api.github.com/repos/rahadalways/camconnect/releases/latest"
+                                        ).readText()
+                                        val jo = org.json.JSONObject(txt)
+                                        val tag = jo.getString("tag_name").removePrefix("v")
+                                        var url = jo.optString("html_url")
+                                        val assets = jo.optJSONArray("assets")
+                                        if (assets != null) {
+                                            for (i in 0 until assets.length()) {
+                                                val a = assets.getJSONObject(i)
+                                                if (a.getString("name").endsWith(".apk")) {
+                                                    url = a.getString("browser_download_url")
+                                                    break
+                                                }
+                                            }
+                                        }
+                                        withContext(Dispatchers.Main) {
+                                            checking = false
+                                            if (tag != currentVersion) updateInfo = tag to url
+                                            else statusMsg = "You have the latest version."
+                                        }
+                                    } catch (e: Exception) {
+                                        withContext(Dispatchers.Main) {
+                                            checking = false
+                                            statusMsg = "Could not check for updates. Check your internet."
+                                        }
+                                    }
+                                }
+                            }
+                            .padding(horizontal = 14.dp, vertical = 8.dp)
+                    ) {
+                        Text(
+                            if (checking) "Checking…" else "Check for update",
+                            color = TextC, fontSize = 12.sp, fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+                updateInfo?.let { (tag, url) ->
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(10.dp))
+                            .background(Accent)
+                            .clickable {
+                                ctx.startActivity(
+                                    Intent(Intent.ACTION_VIEW, android.net.Uri.parse(url))
+                                )
+                            }
+                            .padding(vertical = 10.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "Download v$tag",
+                            color = Bg, fontSize = 13.sp, fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+                statusMsg?.let {
+                    Text(it, color = Muted, fontSize = 11.sp)
+                }
+            }
         }
     }
 }

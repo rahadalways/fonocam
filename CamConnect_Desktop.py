@@ -206,11 +206,11 @@ class CamConnectApp(ctk.CTk):
         left.grid_rowconfigure(1, weight=1)
         left.grid_columnconfigure(0, weight=1)
 
-        self.stream_info = ctk.CTkLabel(left, text="—", font=ctk.CTkFont("Consolas", 12),
+        self.stream_info = ctk.CTkLabel(left, text="-", font=ctk.CTkFont("Consolas", 12),
                                         text_color=MUTED, anchor="w")
         self.stream_info.grid(row=0, column=0, sticky="ew", padx=16, pady=(10, 0))
 
-        self.preview = ctk.CTkLabel(left, text="Open CamConnect on your phone and press Start —\nit will appear in the list on the right.",
+        self.preview = ctk.CTkLabel(left, text="Open CamConnect on your phone and press Start -\nit will appear in the list on the right.",
                                     font=ctk.CTkFont("Segoe UI", 15), text_color=MUTED,
                                     fg_color="#0b0e11", corner_radius=10)
         self.preview.grid(row=1, column=0, sticky="nsew", padx=12, pady=10)
@@ -424,7 +424,7 @@ class CamConnectApp(ctk.CTk):
         threading.Thread(target=self.status_loop, daemon=True).start()
 
         # Parse the MJPEG stream by hand and always decode only the NEWEST
-        # complete JPEG in the buffer — old frames are dropped, so the video
+        # complete JPEG in the buffer - old frames are dropped, so the video
         # never builds up lag when the network hiccups.
         buf = b""
         last = time.time()
@@ -432,7 +432,7 @@ class CamConnectApp(ctk.CTk):
         try:
             while not self.stop_stream.is_set():
                 # read1 = whatever bytes are available right now (no waiting
-                # to fill the whole buffer) — keeps latency at zero
+                # to fill the whole buffer) - keeps latency at zero
                 chunk = stream.read1(65536)
                 if not chunk:
                     break
@@ -546,15 +546,15 @@ class CamConnectApp(ctk.CTk):
             self.stream_info.configure(text="   ".join(bits),
                                        text_color=LIVE if self.recording else MUTED)
         else:
-            self.stream_info.configure(text="—", text_color=MUTED)
+            self.stream_info.configure(text="-", text_color=MUTED)
             if not self.connected:
-                self.preview.configure(image=None, text="Open CamConnect on your phone and press Start —\nit will appear in the list on the right.")
+                self.preview.configure(image=None, text="Open CamConnect on your phone and press Start -\nit will appear in the list on the right.")
                 self.preview._image_ref = None
         self.after(33, self.update_preview)
 
     # ------------------------------------------------ floating preview (PiP)
     def toggle_pip(self):
-        """Small always-on-top preview window — park it in a screen corner
+        """Small always-on-top preview window - park it in a screen corner
         while screen-recording, like streamers do with their facecam."""
         if getattr(self, "pip", None) is not None and self.pip.winfo_exists():
             self.pip.destroy()
@@ -678,7 +678,7 @@ class CamConnectApp(ctk.CTk):
         except Exception as e:
             messagebox.showerror("USB Connect", f"Failed to run adb:\n{e}")
             return
-        # tunnel ready — connect over localhost
+        # tunnel ready - connect over localhost
         self.ip_entry.delete(0, "end")
         self.ip_entry.insert(0, "127.0.0.1")
         if self.connected:

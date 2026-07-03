@@ -11,8 +11,10 @@ android {
     applicationId = "com.rahad.camconnect"
     minSdk = 24
     targetSdk = 36
-    versionCode = 1
-    versionName = "1.0"
+    // CI stamps the real version (1.0.<build number>) so the in-app
+    // update check can compare against the latest GitHub release
+    versionCode = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1
+    versionName = System.getenv("VERSION_NAME") ?: "1.0-dev"
   }
 
   signingConfigs {

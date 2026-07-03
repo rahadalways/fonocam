@@ -8,7 +8,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.example.R
 
-// Poppins — primary UI face
+// Poppins - primary UI face
 val AppFont = FontFamily(
     Font(R.font.poppins_regular, FontWeight.Normal),
     Font(R.font.poppins_medium, FontWeight.Medium),
@@ -16,7 +16,7 @@ val AppFont = FontFamily(
     Font(R.font.poppins_bold, FontWeight.Bold),
 )
 
-// JetBrains Mono — addresses, PIN, status chips
+// JetBrains Mono - addresses, PIN, status chips
 val MonoFont = FontFamily(
     Font(R.font.jetbrainsmono_regular, FontWeight.Normal),
     Font(R.font.jetbrainsmono_bold, FontWeight.Bold),

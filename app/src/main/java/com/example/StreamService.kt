@@ -51,7 +51,7 @@ class StreamService : LifecycleService() {
     var server: WebcamHttpServer? = null
         private set
 
-    // live camera state — the UI polls these
+    // live camera state - the UI polls these
     @Volatile var flashOn = false
     @Volatile var zoomRatio = 1.0f
     @Volatile var quality = 70

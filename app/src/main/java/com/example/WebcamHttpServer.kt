@@ -92,7 +92,7 @@ class WebcamHttpServer(
                         val bytes = msg.toByteArray()
                         sock.send(java.net.DatagramPacket(bytes, bytes.size, target, DISCOVERY_PORT))
                     } catch (e: Exception) {
-                        // network hiccup — keep trying
+                        // network hiccup - keep trying
                     }
                     Thread.sleep(2000)
                 }
