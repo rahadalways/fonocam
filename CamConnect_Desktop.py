@@ -86,6 +86,8 @@ class CamConnectApp(ctk.CTk):
         self.video_writer = None
         self.record_path = None
         self.torch_on = False
+        self.phone_recording = False       # phone-side recording, from /status
+        self._phone_rec_shown = False
 
         self.settings = self.load_settings()
 
@@ -384,6 +386,14 @@ class CamConnectApp(ctk.CTk):
         self.q_seg.set("Medium")
         self.q_seg.pack(side="left", fill="x", expand=True)
 
+        g = group(tab("Phone"), "Phone Recording")
+        row = ctk.CTkFrame(g, fg_color="transparent"); row.pack(fill="x", pady=2)
+        self.phone_rec_btn = self.tool_btn(row, "⏺ Record on Phone",
+                                           lambda: self.phone_action("toggle-record"))
+        ctk.CTkLabel(g, text="Records a backup video on the phone itself\n(saved in the phone's Movies/CamConnect folder).",
+                     font=ctk.CTkFont("Segoe UI", 11), text_color=MUTED,
+                     anchor="w", justify="left").pack(fill="x", padx=4, pady=(4, 0))
+
         # ============ TAB: Capture ============
         g = group(tab("Capture"), "Record & Snapshot")
         row = ctk.CTkFrame(g, fg_color="transparent"); row.pack(fill="x", pady=(2, 4))
@@ -539,6 +549,7 @@ class CamConnectApp(ctk.CTk):
                     url += "?" + q
                 data = json.loads(urllib.request.urlopen(url, timeout=4).read().decode())
                 self.auto_rotation = int(data.get("rotation", 0)) % 360
+                self.phone_recording = bool(data.get("recording", False))
             except Exception:
                 pass
             time.sleep(2)
@@ -600,8 +611,15 @@ class CamConnectApp(ctk.CTk):
                 bits.append("VCAM ON")
             if self.recording:
                 bits.append("REC ●")
+            if self.phone_recording:
+                bits.append("PHONE REC ●")
             self.stream_info.configure(text="   ".join(bits),
                                        text_color=LIVE if self.recording else MUTED)
+            if self.phone_recording != self._phone_rec_shown:
+                self._phone_rec_shown = self.phone_recording
+                self.set_active(self.phone_rec_btn, self.phone_recording)
+                self.phone_rec_btn.configure(
+                    text="⏹ Stop Phone Rec" if self.phone_recording else "⏺ Record on Phone")
         else:
             self.stream_info.configure(text="-", text_color=MUTED)
             if not self.connected:

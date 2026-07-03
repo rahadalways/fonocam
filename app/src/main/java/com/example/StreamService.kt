@@ -98,6 +98,7 @@ class StreamService : LifecycleService() {
                     "switch-camera" -> switchCamera()
                     "zoom" -> value?.toFloatOrNull()?.let { setZoom(it) }
                     "quality" -> value?.toIntOrNull()?.let { applyQuality(it) }
+                    "toggle-record" -> if (isRecording) stopRecording() else startRecording()
                 }
             }
         }
@@ -262,9 +263,11 @@ class StreamService : LifecycleService() {
                         lastRecordingName = name
                         activeRecording = null
                         isRecording = false
+                        server?.isRecordingState = false
                     }
                 }
             isRecording = true
+            server?.isRecordingState = true
             true
         } catch (e: Exception) {
             e.printStackTrace()
@@ -276,6 +279,7 @@ class StreamService : LifecycleService() {
         activeRecording?.stop()
         activeRecording = null
         isRecording = false
+        server?.isRecordingState = false
     }
 
     override fun onDestroy() {

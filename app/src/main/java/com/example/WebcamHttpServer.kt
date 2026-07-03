@@ -51,6 +51,10 @@ class WebcamHttpServer(
     @Volatile
     var deviceName = "Android Phone"
 
+    // whether the phone is currently recording locally (set by StreamService)
+    @Volatile
+    var isRecordingState = false
+
     private val activeStreamsCount = java.util.concurrent.atomic.AtomicInteger(0)
     
     @Volatile
@@ -192,7 +196,8 @@ class WebcamHttpServer(
                             "camera": "$currentCamera",
                             "zoom": $zoomLevel,
                             "quality": $frameQuality,
-                            "rotation": $streamRotation
+                            "rotation": $streamRotation,
+                            "recording": $isRecordingState
                         }""".trimIndent())
                     } else {
                         serveUnauthorized(writer)
