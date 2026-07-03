@@ -2,9 +2,12 @@ package com.example
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
 import android.net.wifi.WifiManager
+import android.os.Build
 import android.os.Bundle
 import android.text.format.Formatter
 import android.view.WindowManager
@@ -14,14 +17,10 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.Preview
-import androidx.camera.lifecycle.ProcessCameraProvider
-import androidx.camera.view.PreviewView
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -36,6 +35,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Cameraswitch
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.FiberManualRecord
 import androidx.compose.material.icons.filled.FlashOff
 import androidx.compose.material.icons.filled.FlashOn
 import androidx.compose.material.icons.filled.PlayArrow
@@ -55,18 +55,18 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import com.example.ui.theme.AppFont
@@ -74,7 +74,7 @@ import com.example.ui.theme.MonoFont
 import com.example.ui.theme.MyApplicationTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.net.NetworkInterface
 import java.util.Collections
 
@@ -111,7 +111,6 @@ class MainActivity : ComponentActivity() {
 fun CamConnectApp(prefs: SharedPreferences) {
     val context = LocalContext.current
     val activity = context as? ComponentActivity
-    val scope = rememberCoroutineScope()
     val clipboard = LocalClipboardManager.current
 
     // ---- persisted settings ----
@@ -125,24 +124,18 @@ fun CamConnectApp(prefs: SharedPreferences) {
     var resolutionName by remember { mutableStateOf(prefs.getString("resolution", "720p") ?: "720p") }
     var autoDimOn by remember { mutableStateOf(prefs.getBoolean("auto_dim", true)) }
 
-    val targetResolution = remember(resolutionName) {
-        when (resolutionName) {
-            "1080p" -> android.util.Size(1920, 1080)
-            "480p" -> android.util.Size(854, 480)
-            else -> android.util.Size(1280, 720)
-        }
-    }
-
-    // ---- runtime state ----
-    var isStreaming by remember { mutableStateOf(false) }
+    // ---- runtime state (mirrored from the service) ----
+    var isStreaming by remember { mutableStateOf(StreamService.instance?.server != null) }
     var flashEnabled by remember { mutableStateOf(false) }
-    var selectedCamera by remember { mutableStateOf(CameraSelector.DEFAULT_BACK_CAMERA) }
-    var zoomRatio by remember { mutableStateOf(1.0f) }
-    var quality by remember { mutableStateOf(70) }
-    var localIp by remember { mutableStateOf(getLocalIpAddress(context)) }
-    var serverInstance by remember { mutableStateOf<WebcamHttpServer?>(null) }
+    var isRecordingPhone by remember { mutableStateOf(false) }
     var pcConnected by remember { mutableStateOf(false) }
+    var zoomRatio by remember { mutableStateOf(1.0f) }
+    var localIp by remember { mutableStateOf(getLocalIpAddress(context)) }
     var showSettings by remember { mutableStateOf(false) }
+
+    // viewfinder frame (decoded from the service's latest JPEG)
+    var frameBitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
+    var frameRotation by remember { mutableStateOf(0f) }
 
     // battery saver
     var dimmed by remember { mutableStateOf(false) }
@@ -153,7 +146,7 @@ fun CamConnectApp(prefs: SharedPreferences) {
         dimmed = false
     }
 
-    // ---- permission ----
+    // ---- permissions (camera + notifications) ----
     var hasCamPermission by remember {
         mutableStateOf(
             ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) ==
@@ -161,11 +154,16 @@ fun CamConnectApp(prefs: SharedPreferences) {
         )
     }
     val permissionLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.RequestPermission()
-    ) { granted -> hasCamPermission = granted }
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { results -> hasCamPermission = results[Manifest.permission.CAMERA] == true }
 
     LaunchedEffect(Unit) {
-        if (!hasCamPermission) permissionLauncher.launch(Manifest.permission.CAMERA)
+        val wanted = mutableListOf(Manifest.permission.CAMERA)
+        if (Build.VERSION.SDK_INT >= 33) wanted.add(Manifest.permission.POST_NOTIFICATIONS)
+        val missing = wanted.any {
+            ContextCompat.checkSelfPermission(context, it) != PackageManager.PERMISSION_GRANTED
+        }
+        if (missing) permissionLauncher.launch(wanted.toTypedArray())
     }
 
     // refresh IP every few seconds (WiFi can change)
@@ -176,14 +174,51 @@ fun CamConnectApp(prefs: SharedPreferences) {
         }
     }
 
-    // keep screen awake while streaming
+    // mirror service state into the UI
+    LaunchedEffect(Unit) {
+        while (true) {
+            val svc = StreamService.instance
+            isStreaming = svc?.server != null
+            flashEnabled = svc?.flashOn ?: false
+            isRecordingPhone = svc?.isRecording ?: false
+            zoomRatio = svc?.zoomRatio ?: 1.0f
+            pcConnected = svc?.server?.hasActiveClients() == true
+            delay(300)
+        }
+    }
+
+    // viewfinder: decode the newest streamed frame ~15x/sec
+    LaunchedEffect(isStreaming) {
+        var lastRef: ByteArray? = null
+        while (isStreaming) {
+            val svc = StreamService.instance
+            val bytes = svc?.server?.latestFrame
+            if (bytes != null && bytes !== lastRef) {
+                val bmp = withContext(Dispatchers.Default) {
+                    try {
+                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+                if (bmp != null) {
+                    frameBitmap = bmp
+                    frameRotation = (svc?.server?.streamRotation ?: 0).toFloat()
+                }
+                lastRef = bytes
+            }
+            delay(66)
+        }
+        frameBitmap = null
+    }
+
+    // keep screen awake while streaming and the app is open
     LaunchedEffect(isStreaming) {
         if (isStreaming) {
             activity?.window?.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         } else {
             activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             dimmed = false
-            pcConnected = false
         }
     }
 
@@ -195,63 +230,12 @@ fun CamConnectApp(prefs: SharedPreferences) {
         }
     }
 
-    // poll: PC connected?
-    LaunchedEffect(isStreaming) {
-        while (isStreaming) {
-            pcConnected = serverInstance?.hasActiveClients() == true
-            delay(1500)
-        }
+    fun startStreaming() {
+        ContextCompat.startForegroundService(context, Intent(context, StreamService::class.java))
     }
 
-    fun startServer() {
-        if (serverInstance != null) return
-        val server = WebcamHttpServer(port = serverPort) { action, value ->
-            scope.launch(Dispatchers.Main) {
-                when (action) {
-                    "toggle-flash" -> flashEnabled = !flashEnabled
-                    "switch-camera" -> selectedCamera =
-                        if (selectedCamera == CameraSelector.DEFAULT_BACK_CAMERA)
-                            CameraSelector.DEFAULT_FRONT_CAMERA
-                        else CameraSelector.DEFAULT_BACK_CAMERA
-                    "zoom" -> value?.toFloatOrNull()?.let { zoomRatio = it.coerceIn(1f, 8f) }
-                    "quality" -> value?.toIntOrNull()?.let { quality = it }
-                }
-            }
-        }
-        server.isSecurityEnabled = securityOn
-        server.serverPin = serverPin
-        server.deviceName = "${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}".trim()
-        server.flashState = flashEnabled
-        server.zoomLevel = zoomRatio
-        server.frameQuality = quality
-        server.start()
-        serverInstance = server
-        isStreaming = true
-    }
-
-    fun stopServer() {
-        serverInstance?.stop()
-        serverInstance = null
-        isStreaming = false
-        flashEnabled = false
-        zoomRatio = 1.0f
-    }
-
-    DisposableEffect(Unit) {
-        onDispose { serverInstance?.stop() }
-    }
-
-    // keep server state in sync
-    LaunchedEffect(flashEnabled) { serverInstance?.flashState = flashEnabled }
-    LaunchedEffect(zoomRatio) { serverInstance?.zoomLevel = zoomRatio }
-    LaunchedEffect(quality) { serverInstance?.frameQuality = quality }
-    LaunchedEffect(securityOn, serverPin) {
-        serverInstance?.isSecurityEnabled = securityOn
-        serverInstance?.serverPin = serverPin
-    }
-    LaunchedEffect(selectedCamera) {
-        serverInstance?.currentCamera =
-            if (selectedCamera == CameraSelector.DEFAULT_BACK_CAMERA) "back" else "front"
+    fun stopStreaming() {
+        context.stopService(Intent(context, StreamService::class.java))
     }
 
     // ---------------- UI ----------------
@@ -264,25 +248,21 @@ fun CamConnectApp(prefs: SharedPreferences) {
                 indication = null
             ) { wake() }
     ) {
-        // ---- camera viewfinder (fills the screen, pinch to zoom) ----
-        if (hasCamPermission) {
-            CameraPreviewContainer(
-                selectedCamera = selectedCamera,
-                flashEnabled = flashEnabled,
-                zoomRatio = zoomRatio,
-                targetResolution = targetResolution,
-                quality = quality,
-                shouldCapture = isStreaming,
-                onFrameCaptured = { bytes, rotation ->
-                    serverInstance?.latestFrame = bytes
-                    serverInstance?.streamRotation = rotation
-                },
+        // ---- viewfinder ----
+        if (isStreaming && frameBitmap != null) {
+            Image(
+                bitmap = frameBitmap!!.asImageBitmap(),
+                contentDescription = "Live camera",
+                contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .fillMaxSize()
+                    .graphicsLayer { rotationZ = frameRotation }
                     .pointerInput(Unit) {
                         detectTransformGestures { _, _, gestureZoom, _ ->
                             wake()
-                            zoomRatio = (zoomRatio * gestureZoom).coerceIn(1f, 8f)
+                            val z = ((StreamService.instance?.zoomRatio
+                                ?: 1f) * gestureZoom).coerceIn(1f, 8f)
+                            StreamService.instance?.setZoom(z)
                         }
                     }
             )
@@ -291,16 +271,20 @@ fun CamConnectApp(prefs: SharedPreferences) {
                 modifier = Modifier.align(Alignment.Center).padding(32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Icon(Icons.Default.Videocam, null, tint = Muted, modifier = Modifier.size(48.dp))
-                Spacer(Modifier.height(12.dp))
+                Icon(Icons.Default.Videocam, null, tint = Muted, modifier = Modifier.size(52.dp))
+                Spacer(Modifier.height(14.dp))
                 Text(
-                    "Camera permission is required.\nPlease allow it in system Settings.",
+                    text = if (hasCamPermission)
+                        if (isStreaming) "Starting camera…"
+                        else "Press Start to begin streaming"
+                    else
+                        "Camera permission is required.\nPlease allow it in system Settings.",
                     color = Muted, fontSize = 15.sp, textAlign = TextAlign.Center
                 )
             }
         }
 
-        // ---- top bar: status chip + settings ----
+        // ---- top bar: record + status chip + settings ----
         Row(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -309,7 +293,40 @@ fun CamConnectApp(prefs: SharedPreferences) {
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Spacer(Modifier.size(44.dp))
+            // backup recording on the phone
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(if (isRecordingPhone) Live else Panel.copy(alpha = 0.85f))
+                    .border(1.dp, if (isRecordingPhone) Live else Line, CircleShape)
+                    .clickable(enabled = isStreaming) {
+                        wake()
+                        val svc = StreamService.instance ?: return@clickable
+                        if (svc.isRecording) {
+                            svc.stopRecording()
+                            Toast.makeText(
+                                context,
+                                "Saved to Movies/CamConnect", Toast.LENGTH_LONG
+                            ).show()
+                        } else {
+                            val ok = svc.startRecording()
+                            Toast.makeText(
+                                context,
+                                if (ok) "Recording on phone…"
+                                else "Recording is not supported on this device",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Default.FiberManualRecord, "Record on phone",
+                    tint = if (isRecordingPhone) Color.White else if (isStreaming) Live else Muted,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
             Spacer(Modifier.weight(1f))
             // status chip
             Row(
@@ -401,7 +418,7 @@ fun CamConnectApp(prefs: SharedPreferences) {
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "ENTER THIS ON YOUR PC · TAP TO COPY",
+                    text = "AUTO-DETECTED ON PC · TAP TO COPY",
                     color = Muted, fontSize = 10.sp,
                     fontFamily = MonoFont, letterSpacing = 1.5.sp
                 )
@@ -429,8 +446,8 @@ fun CamConnectApp(prefs: SharedPreferences) {
                 SideButton(
                     icon = if (flashEnabled) Icons.Default.FlashOn else Icons.Default.FlashOff,
                     active = flashEnabled,
-                    enabled = hasCamPermission
-                ) { wake(); flashEnabled = !flashEnabled }
+                    enabled = isStreaming
+                ) { wake(); StreamService.instance?.toggleFlash() }
 
                 Box(
                     modifier = Modifier
@@ -439,7 +456,7 @@ fun CamConnectApp(prefs: SharedPreferences) {
                         .background(if (isStreaming) Live else Accent)
                         .clickable(enabled = hasCamPermission) {
                             wake()
-                            if (isStreaming) stopServer() else startServer()
+                            if (isStreaming) stopStreaming() else startStreaming()
                         },
                     contentAlignment = Alignment.Center
                 ) {
@@ -454,14 +471,18 @@ fun CamConnectApp(prefs: SharedPreferences) {
                 SideButton(
                     icon = Icons.Default.Cameraswitch,
                     active = false,
-                    enabled = hasCamPermission
-                ) {
-                    wake()
-                    selectedCamera =
-                        if (selectedCamera == CameraSelector.DEFAULT_BACK_CAMERA)
-                            CameraSelector.DEFAULT_FRONT_CAMERA
-                        else CameraSelector.DEFAULT_BACK_CAMERA
-                }
+                    enabled = isStreaming
+                ) { wake(); StreamService.instance?.switchCamera() }
+            }
+
+            Spacer(Modifier.height(10.dp))
+            AnimatedVisibility(visible = isStreaming, enter = fadeIn(), exit = fadeOut()) {
+                Text(
+                    "You can close the app — streaming keeps running in the background.",
+                    color = Muted.copy(alpha = 0.8f), fontSize = 11.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 40.dp)
+                )
             }
         }
 
@@ -514,11 +535,13 @@ fun CamConnectApp(prefs: SharedPreferences) {
                 onPinChange = {
                     serverPin = it
                     prefs.edit().putString("pin", it).apply()
+                    StreamService.instance?.server?.serverPin = it
                 },
                 securityOn = securityOn,
                 onSecurityChange = {
                     securityOn = it
                     prefs.edit().putBoolean("security", it).apply()
+                    StreamService.instance?.server?.isSecurityEnabled = it
                 },
                 autoDimOn = autoDimOn,
                 onAutoDimChange = {
@@ -711,7 +734,7 @@ private fun SettingsDialog(
             }
 
             Text(
-                "Zoom, quality and torch can also be controlled from the PC app. Pinch the viewfinder to zoom.",
+                "Streaming runs as a background service with a notification — you can leave the app or turn the screen off. The ⏺ button records a backup video on the phone (Movies/CamConnect). Pinch the viewfinder to zoom.",
                 color = Color(0xFF5A6570), fontSize = 11.sp, lineHeight = 15.sp
             )
         }
@@ -791,112 +814,4 @@ fun getLocalIpAddress(context: Context): String {
         ex.printStackTrace()
     }
     return "127.0.0.1"
-}
-
-// Live CameraX preview and stream frame grabber container
-@Composable
-fun CameraPreviewContainer(
-    selectedCamera: CameraSelector,
-    flashEnabled: Boolean,
-    zoomRatio: Float,
-    targetResolution: android.util.Size,
-    quality: Int,
-    shouldCapture: Boolean,
-    onFrameCaptured: (ByteArray, Int) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val context = LocalContext.current
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val cameraProviderFuture = remember { ProcessCameraProvider.getInstance(context) }
-
-    var camera by remember { mutableStateOf<androidx.camera.core.Camera?>(null) }
-
-    val previewView = remember {
-        PreviewView(context).apply {
-            scaleType = PreviewView.ScaleType.FILL_CENTER
-        }
-    }
-
-    LaunchedEffect(flashEnabled, camera) {
-        try {
-            camera?.cameraControl?.enableTorch(flashEnabled)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
-    LaunchedEffect(zoomRatio, camera) {
-        try {
-            camera?.cameraControl?.setZoomRatio(zoomRatio)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
-    val analysisExecutor = remember { java.util.concurrent.Executors.newSingleThreadExecutor() }
-
-    DisposableEffect(analysisExecutor) {
-        onDispose { analysisExecutor.shutdown() }
-    }
-
-    LaunchedEffect(selectedCamera, targetResolution, quality, shouldCapture, analysisExecutor) {
-        val cameraProvider = cameraProviderFuture.get()
-        cameraProvider.unbindAll()
-
-        // lock the feed to 16:9 so the stream is never square
-        val resolutionSelector = androidx.camera.core.resolutionselector.ResolutionSelector.Builder()
-            .setAspectRatioStrategy(
-                androidx.camera.core.resolutionselector.AspectRatioStrategy.RATIO_16_9_FALLBACK_AUTO_STRATEGY
-            )
-            .setResolutionStrategy(
-                androidx.camera.core.resolutionselector.ResolutionStrategy(
-                    targetResolution,
-                    androidx.camera.core.resolutionselector.ResolutionStrategy.FALLBACK_RULE_CLOSEST_LOWER_THEN_HIGHER
-                )
-            )
-            .build()
-
-        val preview = Preview.Builder()
-            .setResolutionSelector(resolutionSelector)
-            .build().apply {
-                setSurfaceProvider(previewView.surfaceProvider)
-            }
-
-        val imageAnalysis = ImageAnalysis.Builder()
-            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-            .setResolutionSelector(resolutionSelector)
-            .build()
-
-        var lastProcessedTime = 0L
-        imageAnalysis.setAnalyzer(analysisExecutor) { imageProxy ->
-            try {
-                val now = System.currentTimeMillis()
-                if (shouldCapture && (now - lastProcessedTime >= 33)) {
-                    // applyRotation = false: PC rotates instead (avoids double JPEG encode)
-                    val jpegBytes = imageProxy.toJpegBytes(quality, "None", applyRotation = false)
-                    if (jpegBytes != null) {
-                        onFrameCaptured(jpegBytes, imageProxy.imageInfo.rotationDegrees)
-                        lastProcessedTime = now
-                    }
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            } finally {
-                imageProxy.close()
-            }
-        }
-
-        try {
-            camera = cameraProvider.bindToLifecycle(
-                lifecycleOwner,
-                selectedCamera,
-                preview,
-                imageAnalysis
-            )
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-    }
-
-    AndroidView(factory = { previewView }, modifier = modifier)
 }

@@ -215,11 +215,24 @@ class CamConnectApp(ctk.CTk):
                                     fg_color="#0b0e11", corner_radius=10)
         self.preview.grid(row=1, column=0, sticky="nsew", padx=12, pady=10)
 
-        self.vcam_btn = ctk.CTkButton(left, text="▶   Start Virtual Webcam",
+        btnrow = ctk.CTkFrame(left, fg_color="transparent")
+        btnrow.grid(row=2, column=0, sticky="ew", padx=12, pady=(0, 12))
+        btnrow.grid_columnconfigure(0, weight=1)
+
+        self.vcam_btn = ctk.CTkButton(btnrow, text="▶   Start Virtual Webcam",
                                       font=ctk.CTkFont("Segoe UI", 15, "bold"),
                                       fg_color=ACCENT, hover_color=ACCENT_D, text_color="#14181d",
                                       height=44, corner_radius=10, command=self.toggle_vcam)
-        self.vcam_btn.grid(row=2, column=0, sticky="ew", padx=12, pady=(0, 12))
+        self.vcam_btn.grid(row=0, column=0, sticky="ew", padx=(0, 8))
+
+        self.pip_btn = ctk.CTkButton(btnrow, text="⧉", width=54, height=44, corner_radius=10,
+                                     font=ctk.CTkFont("Segoe UI", 18),
+                                     fg_color=PANEL2, hover_color=LINE, border_width=1,
+                                     border_color=LINE, text_color=TEXT,
+                                     command=self.toggle_pip)
+        self.pip_btn.grid(row=0, column=1)
+        # tooltip-ish hint under the row is overkill; the button toggles the
+        # floating always-on-top preview used while screen recording
 
         # ---- right: controls ----
         right = ctk.CTkScrollableFrame(main, fg_color=PANEL, corner_radius=14,
@@ -227,17 +240,20 @@ class CamConnectApp(ctk.CTk):
         right.grid(row=0, column=1, sticky="nsew")
 
         def group(title):
-            ctk.CTkLabel(right, text=title.upper(), font=ctk.CTkFont("Consolas", 11, "bold"),
-                         text_color=MUTED, anchor="w").pack(fill="x", padx=16, pady=(14, 4))
-            f = ctk.CTkFrame(right, fg_color="transparent")
-            f.pack(fill="x", padx=12)
+            card = ctk.CTkFrame(right, fg_color=PANEL2, corner_radius=12,
+                                border_width=1, border_color=LINE)
+            card.pack(fill="x", padx=8, pady=5)
+            ctk.CTkLabel(card, text=title.upper(), font=ctk.CTkFont("Consolas", 10, "bold"),
+                         text_color=ACCENT, anchor="w").pack(fill="x", padx=14, pady=(10, 2))
+            f = ctk.CTkFrame(card, fg_color="transparent")
+            f.pack(fill="x", padx=10, pady=(0, 10))
             return f
 
         # -- connect --
         g = group("Connect")
         self.device_menu = ctk.CTkOptionMenu(
             g, values=[SEARCHING], command=self.on_device_selected,
-            fg_color=PANEL2, button_color=PANEL2, button_hover_color=LINE,
+            fg_color=PANEL, button_color=PANEL, button_hover_color=LINE,
             dropdown_fg_color=PANEL2, dropdown_hover_color=LINE,
             text_color=TEXT, height=34, corner_radius=8,
             font=ctk.CTkFont("Segoe UI", 12))
@@ -246,15 +262,15 @@ class CamConnectApp(ctk.CTk):
 
         row1 = ctk.CTkFrame(g, fg_color="transparent"); row1.pack(fill="x", pady=2)
         self.ip_entry = ctk.CTkEntry(row1, placeholder_text="Phone IP  (192.168.x.x)",
-                                     fg_color=PANEL2, border_color=LINE, height=34)
+                                     fg_color=PANEL, border_color=LINE, height=34)
         self.ip_entry.pack(side="left", fill="x", expand=True, padx=(0, 6))
         self.port_entry = ctk.CTkEntry(row1, placeholder_text="Port", width=70,
-                                       fg_color=PANEL2, border_color=LINE, height=34)
+                                       fg_color=PANEL, border_color=LINE, height=34)
         self.port_entry.pack(side="left")
 
         row2 = ctk.CTkFrame(g, fg_color="transparent"); row2.pack(fill="x", pady=(6, 2))
         self.pin_entry = ctk.CTkEntry(row2, placeholder_text="PIN (shown on the phone)",
-                                      fg_color=PANEL2, border_color=LINE, height=34)
+                                      fg_color=PANEL, border_color=LINE, height=34)
         self.pin_entry.pack(side="left", fill="x", expand=True)
 
         if self.settings.get("ip"):   self.ip_entry.insert(0, self.settings["ip"])
@@ -269,7 +285,7 @@ class CamConnectApp(ctk.CTk):
                                          command=self.toggle_connect)
         self.connect_btn.pack(side="left", fill="x", expand=True, padx=(0, 6))
         self.usb_btn = ctk.CTkButton(row3, text="🔌 USB", width=90, height=36, corner_radius=8,
-                                     fg_color=PANEL2, hover_color=LINE, border_width=1,
+                                     fg_color=PANEL, hover_color=LINE, border_width=1,
                                      border_color=LINE, text_color=TEXT,
                                      command=self.connect_usb)
         self.usb_btn.pack(side="left")
@@ -278,16 +294,16 @@ class CamConnectApp(ctk.CTk):
         g = group("Virtual Webcam Output")
         row = ctk.CTkFrame(g, fg_color="transparent"); row.pack(fill="x", pady=2)
         self.res_seg = ctk.CTkSegmentedButton(row, values=["480p", "720p", "1080p"],
-                                              fg_color=PANEL2, selected_color=ACCENT,
+                                              fg_color=PANEL, selected_color=ACCENT,
                                               selected_hover_color=ACCENT_D,
-                                              unselected_color=PANEL2, unselected_hover_color=LINE,
+                                              unselected_color=PANEL, unselected_hover_color=LINE,
                                               text_color=TEXT)
         self.res_seg.set("720p")
         self.res_seg.pack(side="left", fill="x", expand=True, padx=(0, 6))
         self.fps_seg = ctk.CTkSegmentedButton(row, values=["30", "60"], width=90,
-                                              fg_color=PANEL2, selected_color=ACCENT,
+                                              fg_color=PANEL, selected_color=ACCENT,
                                               selected_hover_color=ACCENT_D,
-                                              unselected_color=PANEL2, unselected_hover_color=LINE,
+                                              unselected_color=PANEL, unselected_hover_color=LINE,
                                               text_color=TEXT)
         self.fps_seg.set("30")
         self.fps_seg.pack(side="left")
@@ -314,9 +330,9 @@ class CamConnectApp(ctk.CTk):
         ctk.CTkLabel(row, text="Quality", font=ctk.CTkFont("Segoe UI", 12),
                      text_color=MUTED, width=60, anchor="w").pack(side="left", padx=(4, 6))
         self.q_seg = ctk.CTkSegmentedButton(row, values=["Low", "Medium", "High"],
-                                            fg_color=PANEL2, selected_color=ACCENT,
+                                            fg_color=PANEL, selected_color=ACCENT,
                                             selected_hover_color=ACCENT_D,
-                                            unselected_color=PANEL2, unselected_hover_color=LINE,
+                                            unselected_color=PANEL, unselected_hover_color=LINE,
                                             text_color=TEXT, command=self.on_quality)
         self.q_seg.set("Medium")
         self.q_seg.pack(side="left", fill="x", expand=True)
@@ -329,14 +345,14 @@ class CamConnectApp(ctk.CTk):
 
     def tool_btn(self, parent, text, cmd):
         b = ctk.CTkButton(parent, text=text, height=34, corner_radius=8,
-                          fg_color=PANEL2, hover_color=LINE, border_width=1, border_color=LINE,
+                          fg_color=PANEL, hover_color=LINE, border_width=1, border_color=LINE,
                           text_color=TEXT, font=ctk.CTkFont("Segoe UI", 12),
                           command=cmd)
         b.pack(side="left", fill="x", expand=True, padx=2)
         return b
 
     def set_active(self, btn, active):
-        btn.configure(fg_color=ACCENT if active else PANEL2,
+        btn.configure(fg_color=ACCENT if active else PANEL,
                       text_color="#14181d" if active else TEXT,
                       border_color=ACCENT if active else LINE)
 
@@ -346,7 +362,7 @@ class CamConnectApp(ctk.CTk):
                      text_color=MUTED, width=100, anchor="w").pack(side="left", padx=(4, 6))
         s = ctk.CTkSlider(row, from_=lo, to=hi, command=cmd,
                           progress_color=ACCENT, button_color="#ffffff",
-                          button_hover_color=ACCENT, fg_color=PANEL2, height=16)
+                          button_hover_color=ACCENT, fg_color=PANEL, height=16)
         s.set(init)
         s.pack(side="left", fill="x", expand=True)
         return s
@@ -520,6 +536,7 @@ class CamConnectApp(ctk.CTk):
             img = ctk.CTkImage(Image.fromarray(rgb), size=(disp.shape[1], disp.shape[0]))
             self.preview.configure(image=img, text="")
             self.preview._image_ref = img  # keep reference
+            self.update_pip(frame)
 
             bits = [f"● LIVE · {w}x{h} · {self.fps:.0f} fps"]
             if self.vcam_running:
@@ -534,6 +551,48 @@ class CamConnectApp(ctk.CTk):
                 self.preview.configure(image=None, text="Open CamConnect on your phone and press Start —\nit will appear in the list on the right.")
                 self.preview._image_ref = None
         self.after(33, self.update_preview)
+
+    # ------------------------------------------------ floating preview (PiP)
+    def toggle_pip(self):
+        """Small always-on-top preview window — park it in a screen corner
+        while screen-recording, like streamers do with their facecam."""
+        if getattr(self, "pip", None) is not None and self.pip.winfo_exists():
+            self.pip.destroy()
+            self.pip = None
+            self.pip_btn.configure(fg_color=PANEL2, text_color=TEXT)
+            return
+        self.pip = ctk.CTkToplevel(self)
+        self.pip.overrideredirect(True)          # frameless
+        self.pip.attributes("-topmost", True)    # always on top
+        self.pip.geometry("320x180+60+60")
+        self.pip.configure(fg_color="#000000")
+        self.pip_label = ctk.CTkLabel(self.pip, text="", fg_color="#000000")
+        self.pip_label.pack(fill="both", expand=True)
+        self.pip_btn.configure(fg_color=ACCENT, text_color="#14181d")
+
+        # drag to move, double-click to close
+        def press(e):
+            self._pip_dx, self._pip_dy = e.x, e.y
+        def drag(e):
+            self.pip.geometry(f"+{e.x_root - self._pip_dx}+{e.y_root - self._pip_dy}")
+        self.pip_label.bind("<Button-1>", press)
+        self.pip_label.bind("<B1-Motion>", drag)
+        self.pip_label.bind("<Double-Button-1>", lambda e: self.toggle_pip())
+
+    def update_pip(self, frame):
+        if getattr(self, "pip", None) is None or not self.pip.winfo_exists():
+            return
+        h, w = frame.shape[:2]
+        pw = 320
+        ph = max(1, int(pw * h / w))
+        if abs(self.pip.winfo_height() - ph) > 2:
+            x, y = self.pip.winfo_x(), self.pip.winfo_y()
+            self.pip.geometry(f"{pw}x{ph}+{x}+{y}")
+        disp = cv2.resize(frame, (pw, ph))
+        rgb = cv2.cvtColor(disp, cv2.COLOR_BGR2RGB)
+        img = ctk.CTkImage(Image.fromarray(rgb), size=(pw, ph))
+        self.pip_label.configure(image=img)
+        self.pip_label._image_ref = img
 
     # ------------------------------------------------ virtual webcam
     def toggle_vcam(self):
