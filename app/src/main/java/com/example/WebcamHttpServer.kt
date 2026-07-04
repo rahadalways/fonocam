@@ -105,6 +105,50 @@ class WebcamHttpServer(
         }
     }
 
+    // ---- microphone streaming (optional) ----
+    // PC pulls raw PCM (16-bit LE, mono, 16 kHz) from /audio
+    @Volatile
+    var micEnabled = false
+
+    private val audioQueues =
+        java.util.Collections.synchronizedList(mutableListOf<java.util.concurrent.LinkedBlockingQueue<ByteArray>>())
+
+    fun audioClientActive(): Boolean = audioQueues.isNotEmpty()
+
+    fun broadcastAudio(data: ByteArray) {
+        synchronized(audioQueues) {
+            for (q in audioQueues) {
+                if (!q.offer(data)) {
+                    q.poll()          // drop oldest, keep audio near-realtime
+                    q.offer(data)
+                }
+            }
+        }
+    }
+
+    private fun serveAudio(writer: OutputStream) {
+        writer.write(
+            ("HTTP/1.1 200 OK\r\n" +
+                "Content-Type: application/octet-stream\r\n" +
+                "Cache-Control: no-cache\r\n" +
+                "Connection: close\r\n\r\n").toByteArray()
+        )
+        writer.flush()
+        val queue = java.util.concurrent.LinkedBlockingQueue<ByteArray>(60)
+        audioQueues.add(queue)
+        activeStreamsCount.incrementAndGet()
+        try {
+            while (isRunning.get()) {
+                val data = queue.poll(2, java.util.concurrent.TimeUnit.SECONDS) ?: continue
+                writer.write(data)
+                writer.flush()
+            }
+        } finally {
+            audioQueues.remove(queue)
+            activeStreamsCount.decrementAndGet()
+        }
+    }
+
     // shown in the PC app's auto-detected device list
     @Volatile
     var deviceName = "Android Phone"
@@ -245,6 +289,13 @@ class WebcamHttpServer(
                         serveUnauthorized(writer)
                     }
                 }
+                path == "/audio" -> {
+                    if (isAuthorized(params)) {
+                        serveAudio(writer)
+                    } else {
+                        serveUnauthorized(writer)
+                    }
+                }
                 path.startsWith("/action/") -> {
                     if (isAuthorized(params)) {
                         val actionName = path.substringAfter("/action/")
@@ -264,7 +315,8 @@ class WebcamHttpServer(
                             "quality": $frameQuality,
                             "rotation": $streamRotation,
                             "recording": $isRecordingState,
-                            "codec": "$streamCodec"
+                            "codec": "$streamCodec",
+                            "mic": $micEnabled
                         }""".trimIndent())
                     } else {
                         serveUnauthorized(writer)

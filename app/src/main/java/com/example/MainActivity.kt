@@ -118,6 +118,7 @@ fun FonocamApp(prefs: SharedPreferences) {
     var resolutionName by remember { mutableStateOf(prefs.getString("resolution", "720p") ?: "720p") }
     var recQuality by remember { mutableStateOf(prefs.getString("rec_quality", "1080p") ?: "1080p") }
     var streamCodec by remember { mutableStateOf(prefs.getString("codec", "MJPEG") ?: "MJPEG") }
+    var micOn by remember { mutableStateOf(prefs.getBoolean("mic", false)) }
     var autoDimOn by remember { mutableStateOf(prefs.getBoolean("auto_dim", true)) }
 
     // ---- runtime state (mirrored from the service) ----
@@ -543,6 +544,12 @@ fun FonocamApp(prefs: SharedPreferences) {
                     streamCodec = it
                     prefs.edit().putString("codec", it).apply()
                 },
+                micOn = micOn,
+                onMicChange = {
+                    micOn = it
+                    prefs.edit().putBoolean("mic", it).apply()
+                    StreamService.instance?.setMic(it)
+                },
                 autoDimOn = autoDimOn,
                 onAutoDimChange = {
                     autoDimOn = it
@@ -565,6 +572,8 @@ private fun SettingsDialog(
     onRecQualityChange: (String) -> Unit,
     streamCodec: String,
     onStreamCodecChange: (String) -> Unit,
+    micOn: Boolean,
+    onMicChange: (Boolean) -> Unit,
     autoDimOn: Boolean,
     onAutoDimChange: (Boolean) -> Unit,
     onClose: () -> Unit
@@ -708,6 +717,28 @@ private fun SettingsDialog(
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     colors = settingsFieldColors(),
                     modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            // stream microphone (optional)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Column(Modifier.weight(1f)) {
+                    SettingLabel("STREAM MICROPHONE")
+                    Text(
+                        "Send the phone's mic to the PC (use it as a webcam mic). Off by default.",
+                        color = Muted, fontSize = 11.sp, lineHeight = 15.sp
+                    )
+                }
+                Switch(
+                    checked = micOn,
+                    onCheckedChange = onMicChange,
+                    colors = SwitchDefaults.colors(
+                        checkedTrackColor = Accent,
+                        checkedThumbColor = Bg,
+                        uncheckedTrackColor = Panel2,
+                        uncheckedThumbColor = Muted,
+                        uncheckedBorderColor = Line
+                    )
                 )
             }
 

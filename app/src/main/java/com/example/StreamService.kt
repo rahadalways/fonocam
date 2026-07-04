@@ -69,6 +69,10 @@ class StreamService : LifecycleService() {
     private var codecPref = "MJPEG"
     @Volatile
     private var encoder: H264Encoder? = null
+    private var micEnabledPref = false
+    @Volatile
+    private var micRunning = false
+    private var micThread: Thread? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -87,6 +91,7 @@ class StreamService : LifecycleService() {
         val port = prefs.getInt("port", 8080)
         recQualityPref = prefs.getString("rec_quality", "1080p") ?: "1080p"
         codecPref = prefs.getString("codec", "MJPEG") ?: "MJPEG"
+        micEnabledPref = prefs.getBoolean("mic", false)
         targetResolution = when (prefs.getString("resolution", "720p")) {
             "1080p" -> android.util.Size(1920, 1080)
             "480p" -> android.util.Size(854, 480)
@@ -110,12 +115,72 @@ class StreamService : LifecycleService() {
         srv.deviceName = "${Build.MANUFACTURER} ${Build.MODEL}".trim()
         srv.frameQuality = quality
         srv.streamCodec = if (codecPref == "H.264") "h264" else "mjpeg"
+        srv.micEnabled = micEnabledPref
         srv.onH264ClientConnected = { encoder?.requestKeyFrame() }
         srv.start()
         server = srv
 
         bindCamera()
+        if (micEnabledPref) startMic()
         return START_STICKY
+    }
+
+    // ---- microphone capture -> /audio (16-bit PCM, mono, 16 kHz) ----
+    private fun startMic() {
+        if (micRunning) return
+        if (androidx.core.content.ContextCompat.checkSelfPermission(
+                this, android.Manifest.permission.RECORD_AUDIO
+            ) != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) return
+        micRunning = true
+        micThread = Thread {
+            val rate = 16000
+            val minBuf = android.media.AudioRecord.getMinBufferSize(
+                rate,
+                android.media.AudioFormat.CHANNEL_IN_MONO,
+                android.media.AudioFormat.ENCODING_PCM_16BIT
+            )
+            val bufSize = maxOf(minBuf, 4096)
+            val recorder = try {
+                @Suppress("MissingPermission")
+                android.media.AudioRecord(
+                    android.media.MediaRecorder.AudioSource.MIC,
+                    rate,
+                    android.media.AudioFormat.CHANNEL_IN_MONO,
+                    android.media.AudioFormat.ENCODING_PCM_16BIT,
+                    bufSize * 2
+                )
+            } catch (e: Exception) {
+                micRunning = false
+                return@Thread
+            }
+            try {
+                recorder.startRecording()
+                val buf = ByteArray(bufSize)
+                while (micRunning) {
+                    val n = recorder.read(buf, 0, buf.size)
+                    if (n > 0 && server?.audioClientActive() == true) {
+                        server?.broadcastAudio(buf.copyOf(n))
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            } finally {
+                try { recorder.stop() } catch (e: Exception) {}
+                try { recorder.release() } catch (e: Exception) {}
+            }
+        }.apply { isDaemon = true; start() }
+    }
+
+    private fun stopMic() {
+        micRunning = false
+        micThread = null
+    }
+
+    fun setMic(enabled: Boolean) {
+        micEnabledPref = enabled
+        server?.micEnabled = enabled
+        if (enabled) startMic() else stopMic()
     }
 
     private fun startForegroundNotification() {
@@ -333,6 +398,7 @@ class StreamService : LifecycleService() {
 
     override fun onDestroy() {
         stopRecording()
+        stopMic()
         try {
             provider?.unbindAll()
         } catch (e: Exception) {

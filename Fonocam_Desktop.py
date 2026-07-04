@@ -163,6 +163,10 @@ class FonocamApp(ctk.CTk):
         self.torch_on = False
         self.phone_recording = False       # phone-side recording, from /status
         self._phone_rec_shown = False
+        # phone microphone -> PC audio device (optional)
+        self.audio_stop = threading.Event()
+        self.audio_thread = None
+        self.audio_enabled = False
 
         self.settings = self.load_settings()
 
@@ -485,6 +489,23 @@ class FonocamApp(ctk.CTk):
                      font=ctk.CTkFont(UI_FONT, 11), text_color=MUTED,
                      anchor="w", justify="left").pack(fill="x", padx=4, pady=(4, 0))
 
+        # ---- phone microphone (optional) ----
+        g = group(tab("Phone"), "Phone Microphone")
+        devs = [d[0] for d in self._output_devices()] or ["No output device"]
+        self.audio_dev_menu = ctk.CTkOptionMenu(
+            g, values=devs,
+            fg_color=PANEL, button_color=PANEL, button_hover_color=LINE,
+            dropdown_fg_color=PANEL2, dropdown_hover_color=LINE,
+            text_color=TEXT, height=32, corner_radius=8,
+            font=ctk.CTkFont(UI_FONT, 11))
+        pref = self._preferred_audio_index()
+        self.audio_dev_menu.set(pref if pref else devs[0])
+        self.audio_dev_menu.pack(fill="x", pady=(0, 6))
+        self.mic_btn = self.tool_btn(g, "Start Phone Mic", self.toggle_phone_mic)
+        ctk.CTkLabel(g, text="Plays the phone mic into the chosen device. Pick a virtual\naudio cable (e.g. VB-Cable) to use it as a mic in Zoom/Meet.\nEnable 'Stream microphone' in the phone app first.",
+                     font=ctk.CTkFont(UI_FONT, 11), text_color=MUTED,
+                     anchor="w", justify="left").pack(fill="x", padx=4, pady=(6, 0))
+
 
     def tool_btn(self, parent, text, cmd):
         b = ctk.CTkButton(parent, text=text, height=34, corner_radius=8,
@@ -498,6 +519,102 @@ class FonocamApp(ctk.CTk):
         btn.configure(fg_color=ACCENT if active else PANEL,
                       text_color="#14181d" if active else TEXT,
                       border_color=ACCENT if active else LINE)
+
+    # ------------------------------------------------ phone microphone
+    def _output_devices(self):
+        """List playable output devices; returns [(label, index), ...]."""
+        try:
+            import sounddevice as sd
+            out = []
+            for i, d in enumerate(sd.query_devices()):
+                if d.get("max_output_channels", 0) > 0:
+                    out.append((d["name"][:44], i))
+            return out
+        except Exception:
+            return []
+
+    def _preferred_audio_index(self):
+        """Prefer a virtual audio cable so Zoom/Meet can use it as a mic."""
+        for label, idx in self._output_devices():
+            low = label.lower()
+            if "cable" in low or "vb-audio" in low or "voicemeeter" in low:
+                return label
+        return None
+
+    def toggle_phone_mic(self):
+        if self.audio_enabled:
+            self.audio_enabled = False
+            self.audio_stop.set()
+            self.set_active(self.mic_btn, False)
+            self.mic_btn.configure(text="Start Phone Mic")
+            return
+        if not self.connected:
+            self.warn("Phone Mic", "Connect to the phone first.")
+            return
+        self.audio_stop.clear()
+        self.audio_enabled = True
+        self.set_active(self.mic_btn, True)
+        self.mic_btn.configure(text="Stop Phone Mic")
+        self.audio_thread = threading.Thread(target=self.audio_loop, daemon=True)
+        self.audio_thread.start()
+
+    def audio_loop(self):
+        try:
+            import sounddevice as sd
+        except Exception:
+            self.after(0, lambda: self._mic_fail(
+                "Audio support isn't available in this build."))
+            return
+        # which output device: the one picked in the dropdown
+        dev = None
+        try:
+            label = self.audio_dev_menu.get()
+            for lbl, idx in self._output_devices():
+                if lbl == label:
+                    dev = idx
+                    break
+        except Exception:
+            pass
+        try:
+            resp = urllib.request.urlopen(f"{self.base_url()}/audio", timeout=6)
+        except Exception:
+            self.after(0, lambda: self._mic_fail(
+                "Could not open the phone's audio.\nTurn on 'Stream microphone' "
+                "in the phone app settings (it's off by default)."))
+            return
+        stream = None
+        try:
+            stream = sd.RawOutputStream(samplerate=16000, channels=1,
+                                        dtype="int16", device=dev)
+            stream.start()
+            while not self.audio_stop.is_set():
+                data = resp.read(2048)
+                if not data:
+                    break
+                stream.write(data)
+        except Exception as e:
+            self.after(0, lambda e=e: self._mic_fail(
+                f"Could not play to the selected audio device.\n{e}"))
+        finally:
+            try:
+                if stream is not None:
+                    stream.stop(); stream.close()
+            except Exception:
+                pass
+            try:
+                resp.close()
+            except Exception:
+                pass
+
+    def _mic_fail(self, msg):
+        self.audio_enabled = False
+        self.audio_stop.set()
+        try:
+            self.set_active(self.mic_btn, False)
+            self.mic_btn.configure(text="Start Phone Mic")
+        except Exception:
+            pass
+        self.warn("Phone Mic", msg)
 
     # ------------------------------------------------ themed dialogs
     def show_dialog(self, title, message, kind="info"):
@@ -594,6 +711,8 @@ class FonocamApp(ctk.CTk):
             self.toggle_vcam()
         if self.recording:
             self.toggle_record()
+        if self.audio_enabled:
+            self.toggle_phone_mic()
         self.connected = False
         self.connect_btn.configure(text="Connect (WiFi)", state="normal",
                                    fg_color=ACCENT, text_color="#14181d")
