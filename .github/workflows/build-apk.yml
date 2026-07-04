@@ -79,7 +79,7 @@ jobs:
         run: curl -L -o UnityCaptureFilter64bit.dll https://raw.githubusercontent.com/schellingb/UnityCapture/master/Install/UnityCaptureFilter64bit.dll
 
       - name: Build Fonocam.exe
-        run: pyinstaller --noconfirm --onefile --windowed --name Fonocam --icon fonocam.ico --add-data "fonocam.ico;." --add-data "adb;adb" --collect-all customtkinter Fonocam_Desktop.py
+        run: pyinstaller --noconfirm --onefile --windowed --name Fonocam --icon fonocam.ico --add-data "fonocam.ico;." --add-data "adb;adb" --add-data "fonts;fonts" --collect-all customtkinter Fonocam_Desktop.py
 
       - name: Build installer (Inno Setup)
         run: '& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DAppVersion=1.0.${{ github.run_number }} installer.iss'

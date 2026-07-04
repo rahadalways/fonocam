@@ -36,6 +36,30 @@ def resource_path(name):
     return os.path.join(base, name)
 
 
+# UI typefaces — match the app + website (Poppins / JetBrains Mono).
+# Fall back to system fonts if the bundled TTFs can't be registered.
+UI_FONT = "Segoe UI"
+MONO_FONT = "Consolas"
+
+
+def load_custom_fonts():
+    global UI_FONT, MONO_FONT
+    try:
+        import ctypes
+        fdir = resource_path("fonts")
+        FR_PRIVATE = 0x10
+        loaded = 0
+        for fn in os.listdir(fdir):
+            if fn.lower().endswith(".ttf"):
+                if ctypes.windll.gdi32.AddFontResourceExW(
+                        os.path.join(fdir, fn), FR_PRIVATE, 0):
+                    loaded += 1
+        if loaded:
+            UI_FONT, MONO_FONT = "Poppins", "JetBrains Mono"
+    except Exception:
+        pass
+
+
 # settings live in %APPDATA%\Fonocam so the exe can run from anywhere
 _cfg_dir = os.path.join(os.environ.get("APPDATA", os.path.expanduser("~")), "Fonocam")
 try:
@@ -104,9 +128,10 @@ def find_adb():
 class FonocamApp(ctk.CTk):
     def __init__(self):
         super().__init__()
+        load_custom_fonts()
         self.title("Fonocam Desktop")
-        self.geometry("1080x640")
-        self.minsize(940, 560)
+        self.geometry("1120x680")
+        self.minsize(980, 600)
         try:
             self.iconbitmap(resource_path("fonocam.ico"))
         except Exception:
@@ -250,15 +275,15 @@ class FonocamApp(ctk.CTk):
         logo_label = ctk.CTkLabel(top, text="", image=logo)
         logo_label._image_ref = logo
         logo_label.pack(side="left", padx=(18, 8), pady=10)
-        ctk.CTkLabel(top, text="Fonocam", font=ctk.CTkFont("Segoe UI", 19, "bold"),
+        ctk.CTkLabel(top, text="Fonocam", font=ctk.CTkFont(UI_FONT, 19, "bold"),
                      text_color=TEXT).pack(side="left", pady=10)
-        self.status_chip = ctk.CTkLabel(top, text="●  Not connected", font=ctk.CTkFont("Consolas", 13),
+        self.status_chip = ctk.CTkLabel(top, text="●  Not connected", font=ctk.CTkFont(MONO_FONT, 13),
                                         text_color=MUTED)
         self.status_chip.pack(side="right", padx=18)
         ctk.CTkButton(top, text="Docs", width=64, height=30, corner_radius=8,
                       fg_color="transparent", hover_color=PANEL2, border_width=1,
                       border_color=LINE, text_color=MUTED,
-                      font=ctk.CTkFont("Segoe UI", 12),
+                      font=ctk.CTkFont(UI_FONT, 12),
                       command=lambda: webbrowser.open(
                           "https://fonocam.toolastic.com/")
                       ).pack(side="right", padx=(0, 6))
@@ -276,12 +301,12 @@ class FonocamApp(ctk.CTk):
         left.grid_rowconfigure(1, weight=1)
         left.grid_columnconfigure(0, weight=1)
 
-        self.stream_info = ctk.CTkLabel(left, text="-", font=ctk.CTkFont("Consolas", 12),
+        self.stream_info = ctk.CTkLabel(left, text="-", font=ctk.CTkFont(MONO_FONT, 12),
                                         text_color=MUTED, anchor="w")
         self.stream_info.grid(row=0, column=0, sticky="ew", padx=16, pady=(10, 0))
 
         self.preview = ctk.CTkLabel(left, text="Open Fonocam on your phone and press Start -\nit will appear in the list on the right.",
-                                    font=ctk.CTkFont("Segoe UI", 15), text_color=MUTED,
+                                    font=ctk.CTkFont(UI_FONT, 15), text_color=MUTED,
                                     fg_color="#0b0e11", corner_radius=10)
         self.preview.grid(row=1, column=0, sticky="nsew", padx=12, pady=10)
 
@@ -290,7 +315,7 @@ class FonocamApp(ctk.CTk):
         btnrow.grid_columnconfigure(0, weight=1)
 
         self.vcam_btn = ctk.CTkButton(btnrow, text="Start Virtual Webcam",
-                                      font=ctk.CTkFont("Segoe UI", 15, "bold"),
+                                      font=ctk.CTkFont(UI_FONT, 15, "bold"),
                                       fg_color=ACCENT, hover_color=ACCENT_D, text_color="#14181d",
                                       height=44, corner_radius=10, command=self.toggle_vcam)
         self.vcam_btn.grid(row=0, column=0, sticky="ew", padx=(0, 8))
@@ -334,7 +359,7 @@ class FonocamApp(ctk.CTk):
         for name in ("Connect", "Video", "Phone"):
             b = ctk.CTkButton(tabbar, text=name, height=30, corner_radius=8,
                               fg_color="transparent", hover_color=LINE,
-                              text_color=TEXT, font=ctk.CTkFont("Segoe UI", 12, "bold"),
+                              text_color=TEXT, font=ctk.CTkFont(UI_FONT, 12, "bold"),
                               command=lambda n=name: select_tab(n))
             b.pack(side="left", fill="x", expand=True, padx=3, pady=3)
             self._tab_btns[name] = b
@@ -351,7 +376,7 @@ class FonocamApp(ctk.CTk):
             card = ctk.CTkFrame(parent, fg_color=PANEL2, corner_radius=12,
                                 border_width=1, border_color=LINE)
             card.pack(fill="x", padx=2, pady=5)
-            ctk.CTkLabel(card, text=title.upper(), font=ctk.CTkFont("Consolas", 10, "bold"),
+            ctk.CTkLabel(card, text=title.upper(), font=ctk.CTkFont(MONO_FONT, 10, "bold"),
                          text_color=ACCENT, anchor="w").pack(fill="x", padx=14, pady=(10, 2))
             f = ctk.CTkFrame(card, fg_color="transparent")
             f.pack(fill="x", padx=10, pady=(0, 10))
@@ -364,7 +389,7 @@ class FonocamApp(ctk.CTk):
             fg_color=PANEL, button_color=PANEL, button_hover_color=LINE,
             dropdown_fg_color=PANEL2, dropdown_hover_color=LINE,
             text_color=TEXT, height=34, corner_radius=8,
-            font=ctk.CTkFont("Segoe UI", 12))
+            font=ctk.CTkFont(UI_FONT, 12))
         self.device_menu.set(SEARCHING)
         self.device_menu.pack(fill="x", pady=(0, 6))
 
@@ -384,7 +409,7 @@ class FonocamApp(ctk.CTk):
         row3 = ctk.CTkFrame(g, fg_color="transparent"); row3.pack(fill="x", pady=(8, 2))
         self.connect_btn = ctk.CTkButton(row3, text="Connect (WiFi)", height=36, corner_radius=8,
                                          fg_color=ACCENT, hover_color=ACCENT_D, text_color="#14181d",
-                                         font=ctk.CTkFont("Segoe UI", 13, "bold"),
+                                         font=ctk.CTkFont(UI_FONT, 13, "bold"),
                                          command=self.toggle_connect)
         self.connect_btn.pack(side="left", fill="x", expand=True, padx=(0, 6))
         self.usb_btn = ctk.CTkButton(row3, text="USB", width=90, height=36, corner_radius=8,
@@ -412,7 +437,7 @@ class FonocamApp(ctk.CTk):
         self.fps_seg.pack(side="left")
 
         row = ctk.CTkFrame(g, fg_color="transparent"); row.pack(fill="x", pady=(8, 2))
-        ctk.CTkLabel(row, text="Framing", font=ctk.CTkFont("Segoe UI", 12),
+        ctk.CTkLabel(row, text="Framing", font=ctk.CTkFont(UI_FONT, 12),
                      text_color=MUTED, width=60, anchor="w").pack(side="left", padx=(4, 6))
         self.fill_seg = ctk.CTkSegmentedButton(row, values=["Fit", "Fill"],
                                                fg_color=PANEL, selected_color=ACCENT,
@@ -422,7 +447,7 @@ class FonocamApp(ctk.CTk):
         self.fill_seg.set("Fit")
         self.fill_seg.pack(side="left", fill="x", expand=True)
         ctk.CTkLabel(g, text="Fit = black bars, whole picture · Fill = zoom-crop, no bars",
-                     font=ctk.CTkFont("Segoe UI", 11), text_color=MUTED,
+                     font=ctk.CTkFont(UI_FONT, 11), text_color=MUTED,
                      anchor="w").pack(fill="x", padx=4, pady=(4, 0))
 
         g = group(tab("Video"), "Transform")
@@ -442,7 +467,7 @@ class FonocamApp(ctk.CTk):
         self.tool_btn(row, "Switch Camera", lambda: self.phone_action("switch-camera"))
         self.zoom_slider = self.slider(g, "Zoom", 10, 80, 10, self.on_zoom)
         row = ctk.CTkFrame(g, fg_color="transparent"); row.pack(fill="x", pady=(4, 2))
-        ctk.CTkLabel(row, text="Quality", font=ctk.CTkFont("Segoe UI", 12),
+        ctk.CTkLabel(row, text="Quality", font=ctk.CTkFont(UI_FONT, 12),
                      text_color=MUTED, width=60, anchor="w").pack(side="left", padx=(4, 6))
         self.q_seg = ctk.CTkSegmentedButton(row, values=["Low", "Medium", "High"],
                                             fg_color=PANEL, selected_color=ACCENT,
@@ -457,14 +482,14 @@ class FonocamApp(ctk.CTk):
         self.phone_rec_btn = self.tool_btn(row, "Record on Phone",
                                            lambda: self.phone_action("toggle-record"))
         ctk.CTkLabel(g, text="Records a backup video on the phone itself\n(saved in the phone's Movies/Fonocam folder).",
-                     font=ctk.CTkFont("Segoe UI", 11), text_color=MUTED,
+                     font=ctk.CTkFont(UI_FONT, 11), text_color=MUTED,
                      anchor="w", justify="left").pack(fill="x", padx=4, pady=(4, 0))
 
 
     def tool_btn(self, parent, text, cmd):
         b = ctk.CTkButton(parent, text=text, height=34, corner_radius=8,
                           fg_color=PANEL, hover_color=LINE, border_width=1, border_color=LINE,
-                          text_color=TEXT, font=ctk.CTkFont("Segoe UI", 12),
+                          text_color=TEXT, font=ctk.CTkFont(UI_FONT, 12),
                           command=cmd)
         b.pack(side="left", fill="x", expand=True, padx=2)
         return b
@@ -476,7 +501,7 @@ class FonocamApp(ctk.CTk):
 
     def slider(self, parent, label, lo, hi, init, cmd):
         row = ctk.CTkFrame(parent, fg_color="transparent"); row.pack(fill="x", pady=3)
-        ctk.CTkLabel(row, text=label, font=ctk.CTkFont("Segoe UI", 12),
+        ctk.CTkLabel(row, text=label, font=ctk.CTkFont(UI_FONT, 12),
                      text_color=MUTED, width=100, anchor="w").pack(side="left", padx=(4, 6))
         s = ctk.CTkSlider(row, from_=lo, to=hi, command=cmd,
                           progress_color=ACCENT, button_color="#ffffff",
@@ -783,7 +808,7 @@ class FonocamApp(ctk.CTk):
                 self.phone_rec_btn.configure(
                     text="Stop Phone Recording" if self.phone_recording else "Record on Phone")
         else:
-            self.stream_info.configure(text="-", text_color=MUTED)
+            self.stream_info.configure(text="○ NOT STREAMING", text_color=MUTED)
             if not self.connected:
                 self.preview.configure(image=None, text="Open Fonocam on your phone and press Start -\nit will appear in the list on the right.")
                 self.preview._image_ref = None
