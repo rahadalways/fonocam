@@ -499,6 +499,60 @@ class FonocamApp(ctk.CTk):
                       text_color="#14181d" if active else TEXT,
                       border_color=ACCENT if active else LINE)
 
+    # ------------------------------------------------ themed dialogs
+    def show_dialog(self, title, message, kind="info"):
+        """A dark, on-brand replacement for tkinter's native message boxes."""
+        accent = LIVE if kind == "error" else ACCENT
+        hover = "#c23b3f" if kind == "error" else ACCENT_D
+        glyph = {"info": "", "warning": "", "error": ""}.get(kind, "")
+        try:
+            win = ctk.CTkToplevel(self)
+            win.overrideredirect(True)
+            win.configure(fg_color=BG)
+            win.attributes("-topmost", True)
+
+            card = ctk.CTkFrame(win, fg_color=PANEL, corner_radius=16,
+                                border_width=1, border_color=LINE)
+            card.pack(fill="both", expand=True)
+
+            head = ctk.CTkFrame(card, fg_color="transparent")
+            head.pack(fill="x", padx=24, pady=(22, 8))
+            ctk.CTkLabel(head, text=glyph, font=ctk.CTkFont(ICON_FONT, 20),
+                         text_color=accent).pack(side="left", padx=(0, 11))
+            ctk.CTkLabel(head, text=title, font=ctk.CTkFont(UI_FONT, 16, "bold"),
+                         text_color=TEXT).pack(side="left")
+
+            ctk.CTkLabel(card, text=message, font=ctk.CTkFont(UI_FONT, 13),
+                         text_color=MUTED, justify="left", wraplength=400).pack(
+                fill="x", padx=24, pady=(0, 18))
+
+            ctk.CTkButton(card, text="OK", width=120, height=38, corner_radius=9,
+                          fg_color=accent, hover_color=hover, text_color="#14181d",
+                          font=ctk.CTkFont(UI_FONT, 13, "bold"),
+                          command=win.destroy).pack(pady=(0, 20))
+
+            win.update_idletasks()
+            w = max(380, card.winfo_reqwidth())
+            h = card.winfo_reqheight()
+            px, py = self.winfo_rootx(), self.winfo_rooty()
+            pw, ph = self.winfo_width(), self.winfo_height()
+            x, y = px + (pw - w) // 2, py + (ph - h) // 3
+            win.geometry(f"{w}x{h}+{max(x, 0)}+{max(y, 0)}")
+            win.grab_set()
+            win.bind("<Return>", lambda e: win.destroy())
+            win.bind("<Escape>", lambda e: win.destroy())
+        except Exception:
+            messagebox.showinfo(title, message)  # never lose a message
+
+    def info(self, title, message):
+        self.show_dialog(title, message, "info")
+
+    def warn(self, title, message):
+        self.show_dialog(title, message, "warning")
+
+    def error(self, title, message):
+        self.show_dialog(title, message, "error")
+
     def slider(self, parent, label, lo, hi, init, cmd):
         row = ctk.CTkFrame(parent, fg_color="transparent"); row.pack(fill="x", pady=3)
         ctk.CTkLabel(row, text=label, font=ctk.CTkFont(UI_FONT, 12),
@@ -525,7 +579,7 @@ class FonocamApp(ctk.CTk):
     def connect(self):
         ip = self.ip_entry.get().strip()
         if not ip:
-            messagebox.showwarning("Fonocam",
+            self.warn("Fonocam",
                                    "Enter the phone's IP address first, or wait for your\n"
                                    "phone to appear in the detected-devices list.")
             return
@@ -596,7 +650,7 @@ class FonocamApp(ctk.CTk):
         try:
             import av
         except ImportError:
-            self.after(0, lambda: messagebox.showwarning(
+            self.after(0, lambda: self.warn(
                 "Fonocam",
                 "The phone is set to H.264 but this PC build lacks the\n"
                 "'av' decoder package. Falling back to MJPEG.\n"
@@ -732,7 +786,7 @@ class FonocamApp(ctk.CTk):
     def on_stream_failed(self):
         self.connect_btn.configure(text="Connect (WiFi)", state="normal")
         self.status_chip.configure(text="●  Connection failed", text_color=LIVE)
-        messagebox.showerror("Fonocam",
+        self.error("Fonocam",
                              "Could not connect to the phone.\n\n"
                              "Please check:\n"
                              "  1. The phone app is streaming (press Start on the phone)\n"
@@ -742,7 +796,7 @@ class FonocamApp(ctk.CTk):
     def on_stream_failed_old_app(self):
         self.connect_btn.configure(text="Connect (WiFi)", state="normal")
         self.status_chip.configure(text="●  Update phone app", text_color=LIVE)
-        messagebox.showerror("Fonocam",
+        self.error("Fonocam",
                              "The phone is running an old version of the app\n"
                              "(it still asks for a PIN).\n\n"
                              "Update it: open the app on the phone, then\n"
@@ -755,7 +809,7 @@ class FonocamApp(ctk.CTk):
     def on_record_interrupted(self):
         self.rec_btn.configure(text=I_RECORD, fg_color=PANEL2,
                                text_color=LIVE, border_color=LINE)
-        messagebox.showinfo("Fonocam",
+        self.info("Fonocam",
                             "Recording was stopped because the video size changed\n"
                             "(rotation or camera switch). The file so far is saved:\n"
                             f"{self.record_path}")
@@ -880,7 +934,7 @@ class FonocamApp(ctk.CTk):
                                     fg_color=ACCENT, text_color="#14181d")
             return
         if not self.connected:
-            messagebox.showwarning("Fonocam", "Connect to the phone first.")
+            self.warn("Fonocam", "Connect to the phone first.")
             return
         self.vcam_running = True
         self.vcam_btn.configure(text="Stop Virtual Webcam",
@@ -910,7 +964,7 @@ class FonocamApp(ctk.CTk):
             self.after(0, lambda: (
                 self.vcam_btn.configure(text="Start Virtual Webcam",
                                         fg_color=ACCENT, text_color="#14181d"),
-                messagebox.showerror(
+                self.error(
                     "Virtual Webcam",
                     "Could not start the virtual webcam.\n\n"
                     "Install Fonocam using the Windows installer (it sets up\n"
@@ -952,7 +1006,7 @@ class FonocamApp(ctk.CTk):
                 self.after(0, lambda: (
                     self.vcam_btn.configure(text="Start Virtual Webcam",
                                             fg_color=ACCENT, text_color="#14181d"),
-                    messagebox.showwarning(
+                    self.warn(
                         "Virtual Webcam",
                         "The virtual webcam stopped unexpectedly\n"
                         "(another app may have taken it). Start it again.")))
@@ -961,7 +1015,7 @@ class FonocamApp(ctk.CTk):
     def connect_usb(self):
         adb = find_adb()
         if not adb:
-            messagebox.showerror(
+            self.error(
                 "USB Connect",
                 "adb was not found on this PC.\n\n"
                 "USB mode needs Android platform-tools (adb).\n"
@@ -974,7 +1028,7 @@ class FonocamApp(ctk.CTk):
             out = subprocess.run([adb, "devices"], capture_output=True, text=True, timeout=15).stdout
             devices = [l for l in out.strip().splitlines()[1:] if l.strip().endswith("device")]
             if not devices:
-                messagebox.showwarning(
+                self.warn(
                     "USB Connect",
                     "No phone was found over USB.\n\n"
                     "  1. Plug the phone in with a USB cable\n"
@@ -984,11 +1038,11 @@ class FonocamApp(ctk.CTk):
             fwd = subprocess.run([adb, "forward", f"tcp:{port}", f"tcp:{port}"],
                                  capture_output=True, text=True, timeout=15)
             if fwd.returncode != 0:
-                messagebox.showerror("USB Connect",
+                self.error("USB Connect",
                                      f"Could not set up the USB tunnel:\n{fwd.stderr.strip()}")
                 return
         except Exception as e:
-            messagebox.showerror("USB Connect", f"Failed to run adb:\n{e}")
+            self.error("USB Connect", f"Failed to run adb:\n{e}")
             return
         # tunnel ready - connect over localhost
         self.ip_entry.delete(0, "end")
@@ -1054,12 +1108,12 @@ class FonocamApp(ctk.CTk):
             self.rec_btn.configure(text=I_RECORD, fg_color=PANEL2,
                                    text_color=LIVE, border_color=LINE)
             if self.record_path:
-                messagebox.showinfo("Fonocam", f"Video saved:\n{self.record_path}")
+                self.info("Fonocam", f"Video saved:\n{self.record_path}")
             return
         with self.frame_lock:
             frame = self.frame
             if frame is None:
-                messagebox.showwarning("Fonocam", "Connect first, then record.")
+                self.warn("Fonocam", "Connect first, then record.")
                 return
             h, w = frame.shape[:2]
             folder = os.path.join(os.path.expanduser("~"), "Videos", "Fonocam")
@@ -1069,7 +1123,7 @@ class FonocamApp(ctk.CTk):
             self.video_writer = cv2.VideoWriter(self.record_path, fourcc, max(self.fps, 10.0), (w, h))
             if not self.video_writer.isOpened():
                 self.video_writer = None
-                messagebox.showerror("Fonocam", "Could not create the video file.\n"
+                self.error("Fonocam", "Could not create the video file.\n"
                                                    "Check that the Videos folder is writable.")
                 return
             self._rec_size = (w, h)
@@ -1081,13 +1135,13 @@ class FonocamApp(ctk.CTk):
         with self.frame_lock:
             frame = None if self.frame is None else self.frame.copy()
         if frame is None:
-            messagebox.showwarning("Fonocam", "Connect first, then take a snapshot.")
+            self.warn("Fonocam", "Connect first, then take a snapshot.")
             return
         folder = os.path.join(os.path.expanduser("~"), "Pictures", "Fonocam")
         os.makedirs(folder, exist_ok=True)
         path = os.path.join(folder, datetime.now().strftime("Fonocam_%Y%m%d_%H%M%S.jpg"))
         cv2.imwrite(path, frame)
-        messagebox.showinfo("Fonocam", f"Snapshot saved:\n{path}")
+        self.info("Fonocam", f"Snapshot saved:\n{path}")
 
     # ------------------------------------------------ close
     def on_close(self):
