@@ -76,7 +76,7 @@ jobs:
           copy pt\platform-tools\AdbWinUsbApi.dll adb\
 
       - name: Fetch Unity Capture driver (virtual camera, no OBS needed)
-        run: curl -L -o UnityCaptureFilter64bit.dll https://raw.githubusercontent.com/schellingb/UnityCapture/master/Install/UnityCaptureFilter64bit.dll
+        run: curl -L --fail -o UnityCaptureFilter64bit.dll https://raw.githubusercontent.com/schellingb/UnityCapture/master/Install/UnityCaptureFilter64.dll
 
       - name: Build Fonocam.exe
         run: pyinstaller --noconfirm --onefile --windowed --name Fonocam --icon fonocam.ico --add-data "fonocam.ico;." --add-data "adb;adb" --add-data "fonts;fonts" --collect-all customtkinter --collect-all sounddevice Fonocam_Desktop.py

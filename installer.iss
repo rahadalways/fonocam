@@ -19,6 +19,10 @@ SolidCompression=yes
 WizardStyle=modern
 ; admin so we can register the Unity Capture virtual-camera driver
 PrivilegesRequired=admin
+; 64-bit install: the Unity Capture DLL is 64-bit, so it must live in the
+; 64-bit Program Files and be registered with the 64-bit regsvr32
+ArchitecturesAllowed=x64
+ArchitecturesInstallIn64BitMode=x64
 DisableProgramGroupPage=yes
 
 [Tasks]
@@ -27,7 +31,7 @@ Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "A
 [Files]
 Source: "dist\Fonocam.exe"; DestDir: "{app}"; Flags: ignoreversion
 ; bundled virtual-camera driver (so users don't need OBS)
-Source: "UnityCaptureFilter64bit.dll"; DestDir: "{app}"; Flags: ignoreversion regserver
+Source: "UnityCaptureFilter64bit.dll"; DestDir: "{app}"; Flags: ignoreversion regserver 64bit
 
 [Icons]
 Name: "{group}\Fonocam"; Filename: "{app}\Fonocam.exe"
