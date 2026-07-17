@@ -259,6 +259,7 @@ class FonocamApp(ctk.CTk):
         data = {
             "ip": self.ip_entry.get().strip(),
             "port": self.port_entry.get().strip(),
+            "vcam_driver": self.driver_seg.get(),
         }
         try:
             with open(SETTINGS_FILE, "w") as f:
@@ -439,6 +440,21 @@ class FonocamApp(ctk.CTk):
                                               text_color=TEXT)
         self.fps_seg.set("30")
         self.fps_seg.pack(side="left")
+
+        row = ctk.CTkFrame(g, fg_color="transparent"); row.pack(fill="x", pady=(8, 2))
+        ctk.CTkLabel(row, text="Driver", font=ctk.CTkFont(UI_FONT, 12),
+                     text_color=MUTED, width=60, anchor="w").pack(side="left", padx=(4, 6))
+        self.driver_seg = ctk.CTkSegmentedButton(row, values=["Auto", "Fonocam", "OBS"],
+                                                 fg_color=PANEL, selected_color=ACCENT,
+                                                 selected_hover_color=ACCENT_D,
+                                                 unselected_color=PANEL, unselected_hover_color=LINE,
+                                                 text_color=TEXT)
+        drv = self.settings.get("vcam_driver", "Auto")
+        self.driver_seg.set(drv if drv in ("Auto", "Fonocam", "OBS") else "Auto")
+        self.driver_seg.pack(side="left", fill="x", expand=True)
+        ctk.CTkLabel(g, text="Auto = Fonocam's driver first, then OBS · pick one to force it",
+                     font=ctk.CTkFont(UI_FONT, 11), text_color=MUTED,
+                     anchor="w").pack(fill="x", padx=4, pady=(4, 0))
 
         row = ctk.CTkFrame(g, fg_color="transparent"); row.pack(fill="x", pady=(8, 2))
         ctk.CTkLabel(row, text="Framing", font=ctk.CTkFont(UI_FONT, 12),
@@ -1065,11 +1081,18 @@ class FonocamApp(ctk.CTk):
         import pyvirtualcam
         w, h = VCAM_SIZES[self.res_seg.get()]
         fps = int(self.fps_seg.get())
-        # Prefer our bundled Unity Capture driver (installed by the setup, so
-        # no OBS needed); fall back to OBS Virtual Camera, then to any backend.
+        # Driver choice from the Video tab: force one driver, or Auto =
+        # bundled Unity Capture first, then OBS Virtual Camera, then anything.
+        choice = self.driver_seg.get()
+        if choice == "Fonocam":
+            backends = ("unitycapture",)
+        elif choice == "OBS":
+            backends = ("obs",)
+        else:
+            backends = ("unitycapture", "obs", None)
         cam = None
         last_err = None
-        for backend in ("unitycapture", "obs", None):
+        for backend in backends:
             try:
                 kw = {"backend": backend} if backend else {}
                 cam = pyvirtualcam.Camera(width=w, height=h, fps=fps,
@@ -1080,16 +1103,26 @@ class FonocamApp(ctk.CTk):
                 cam = None
         if cam is None:
             self.vcam_running = False
+            if choice == "OBS":
+                msg = ("Could not start the OBS Virtual Camera.\n\n"
+                       "Install OBS Studio (free) from obsproject.com,\n"
+                       "or set Driver to 'Auto' in the Video tab.\n\n"
+                       f"Error: {last_err}")
+            elif choice == "Fonocam":
+                msg = ("Could not start Fonocam's virtual camera driver.\n\n"
+                       "Reinstall Fonocam with the Windows installer (it sets\n"
+                       "up the driver), or set Driver to 'Auto' in the Video tab.\n\n"
+                       f"Error: {last_err}")
+            else:
+                msg = ("Could not start the virtual webcam.\n\n"
+                       "Install Fonocam using the Windows installer (it sets up\n"
+                       "the virtual camera automatically), or install OBS Studio\n"
+                       "(free) from obsproject.com, then try again.\n\n"
+                       f"Error: {last_err}")
             self.after(0, lambda: (
                 self.vcam_btn.configure(text="Start Virtual Webcam",
                                         fg_color=ACCENT, text_color="#14181d"),
-                self.error(
-                    "Virtual Webcam",
-                    "Could not start the virtual webcam.\n\n"
-                    "Install Fonocam using the Windows installer (it sets up\n"
-                    "the virtual camera automatically), or install OBS Studio\n"
-                    "(free) from obsproject.com, then try again.\n\n"
-                    f"Error: {last_err}")))
+                self.error("Virtual Webcam", msg)))
             return
         canvas = np.zeros((h, w, 3), dtype=np.uint8)
         try:
